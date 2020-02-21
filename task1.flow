@@ -1,12 +1,13 @@
-import runtime;
+import string;
 
-transform(m : [int]) -> [int] {
-    map(m,\x->x+1);
-}
+Numb(a1:int);
 
 
-main() {
-    ex = [1,2,3];
-
-    println(transform(ex));
+main()->void{
+    f= \x,y->x+y;
+    sum = fold([1,2,3],0,f);
+    a = Numb(5);
+    println(a);
+    println(a.a1);
+    println(sum);
 }
