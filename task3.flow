@@ -1,0 +1,27 @@
+import string;
+import ds/list;
+
+main()-> void {
+    m = 30;
+    println( fib(m) );
+}
+
+mysum(n : [int]) -> int {
+    fold(n,0,\x,y->x+y);
+}
+
+fibr(n : int) -> [int]{
+    if (n == 0) {[0];}
+    else{
+           if (n == 1) {[1,0];}
+           else {
+               old = fibr(n - 1);
+               new = [mysum(take(old,2))];
+               concat(new,old);
+           }
+        }
+}
+
+fib(n : int) -> [int]{
+    reverseA(fibr(n))
+}
