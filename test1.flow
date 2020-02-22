@@ -1,1 +1,28 @@
+import string;
+
+Numb(a1:int);
+
+
+main()->void{
+    f= \x,y->x+y;
+    sum = fold([1,2,3],0,f);
+    a = Numb(5);
+    println(a);
+    println(a.a1);
+    println(sum);
+}
+
+import string;
+
+Numb(a1:int);
+Expr ::= Numb,Myadd,Mymult;
+Myadd(a1:Expr,a2:Expr);
+Mymult(a1:Expr,a2:Expr);
+
+
+main()->void{
+    a = Numb(5);
+    println(a);
+    println(a.a1);
+}
 
