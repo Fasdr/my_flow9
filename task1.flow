@@ -1,1 +1,10 @@
+import string;
 
+main()-> void {
+    m =[1,2,3];
+    println(ia2str(m));
+}
+
+ia2str(n : [int]) -> string {
+    strGlue(map(n,i2s),"");
+}
