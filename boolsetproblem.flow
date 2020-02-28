@@ -1,0 +1,30 @@
+import lingo/pegcode/driver;
+
+BoolForm ::= BoolAdd,BoolMult,BoolImpl,BoolTrue,BoolFalse,BoolVar,BoolNeg;
+BoolAdd(a1:BoolForm,a2:BoolForm);
+BoolMult(a1:BoolForm,a2:BoolForm);
+BoolImpl(a1:BoolForm,a2:BoolForm);
+BoolNeg(a1:BoolForm);
+BoolTrue();
+BoolFalse();
+BoolVar(a:string);
+
+s2bf(str : string) -> BoolForm {
+    b_gr = "#include H:\bool.lingo";
+    parsic(
+        compilePegGrammar(b_gr),
+        str,
+        defaultPegActions
+    )
+}
+
+bf2s(f : BoolForm) -> string {
+    switch (f) {
+        BoolAdd(a1,a2): "(" + bf2s(a1) ws "\\/" +  bf2s(a2) + ")";
+        Bool(a1,a2): "(" + bf2s(a1) ws "\\/" +  bf2s(a2) + ")";
+    }
+}
+
+main() {
+    println(s2bf("Not ((F/\\T)->(x\\/y))"));
+}

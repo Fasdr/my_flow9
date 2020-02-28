@@ -1,0 +1,10 @@
+BoolForm = BoolAdd | BoolMult | BoolImpl | BoolNeg | BoolTrue | BoolFalse | BoolVar;
+BoolAdd = "(" ws BoolForm:l ws "\\/" ws  BoolForm:r ws ")" ws {BoolAdd(:l, :r)};
+BoolMult = "(" ws BoolForm:l ws "/\\" ws  BoolForm:r ws ")" ws {BoolMult(:l, :r)};
+BoolImpl = "(" ws BoolForm:l ws "->" ws  BoolForm:r ws ")" ws {BoolImpl (:l, :r)};
+BoolNeg = "Not"  ws BoolForm:e ws {BoolNeg(:e)};
+BoolTrue = "T" ws {BoolTrue()};
+BoolFalse = "F" ws {BoolFalse()};
+BoolVar = letter+ $s ws {BoolVar($s)};
+letter = 'a'-'z';
+ws = (' ' | '\t' | '\n' | '\r')*;
