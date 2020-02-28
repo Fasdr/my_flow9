@@ -38,3 +38,19 @@ main() {
 
     println(transform(ex));
 }
+
+import string;
+
+Numb(a1:int);
+Expr ::= Numb,Myadd,Mymult;
+Myadd(a1:Expr,a2:Expr);
+Mymult(a1:Expr,a2:Expr);
+
+
+main()->void{
+    a = Numb(5);
+    b = Numb(6);
+    c = Myadd(a,b);
+    println(c);
+    println(c.a1);
+}
