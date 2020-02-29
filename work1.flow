@@ -1,0 +1,28 @@
+import string;
+import ds/tree;
+
+/*
+BoolForm ::= BoolAdd,BoolMult,BoolImpl,BoolNeg,BoolConst,BoolVar;
+BoolAdd(a1:BoolForm,a2:BoolForm);
+BoolMult(a1:BoolForm,a2:BoolForm);
+BoolImpl(a1:BoolForm,a2:BoolForm);
+BoolNeg(a:BoolForm);
+BoolConst(a:bool);
+BoolVar(a:string);
+
+mys2b(str : string) -> bool {
+    if (str == "T") {true;} 
+    else {false;}
+}
+
+main() {
+    println(BoolConst(mys2b("F")));
+}
+*/
+
+
+
+main() {
+    mas = [6,3,7,2,8,-2,4];
+    println(mas);
+}
