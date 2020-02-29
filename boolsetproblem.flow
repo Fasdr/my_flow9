@@ -10,6 +10,7 @@ BoolTrue();
 BoolFalse();
 BoolVar(a:string);
 
+//парсим строки в формулы
 s2bf(str : string) -> BoolForm {
     b_gr = "#include bool.lingo";
     parsic(
@@ -19,6 +20,7 @@ s2bf(str : string) -> BoolForm {
     )
 }
 
+//записываем формулы в строки
 bf2s(f : BoolForm) -> string {
     switch (f) {
         BoolAdd(a1,a2): "(" + bf2s(a1) + "\\/" +  bf2s(a2) + ")";
@@ -31,6 +33,7 @@ bf2s(f : BoolForm) -> string {
     }
 }
 
+//находим переменные в формуле
 favit(f : BoolForm) -> [string] {
         switch (f) {
         BoolAdd(a1,a2): concatA([favit(a1),favit(a2)]);
@@ -43,6 +46,7 @@ favit(f : BoolForm) -> [string] {
     }
 }
 
+//записываем переменные из формулы в дерево с дефолтным значением true
 bf2t(f : BoolForm) -> Tree<string, bool> {
     mas = favit(f);
     new_tree = makeTree();
@@ -50,16 +54,33 @@ bf2t(f : BoolForm) -> Tree<string, bool> {
     fold(mas, new_tree, g);
 }
 
-tiv(t : Tree<string, bool>, s : string) {
+//ищем значение по дереву с дефолтным значением true
+tiv(t : Tree<string, bool>, s : string) -> bool {
     lookupTreeDef(t, s, true);
 }
 
+//вычисляем формулы
+evf(f : BoolForm, t : Tree<string, bool>) -> bool {
+        switch (f) {
+        BoolAdd(a1,a2): evf(a1,t)||evf(a2,t);
+        BoolMult(a1,a2):  evf(a1,t)&&evf(a2,t);
+        BoolImpl(a1,a2): evf(a1,t)->evf(a2,t);
+        BoolNeg(a1): !evf(a1,t);
+        BoolTrue(): true;
+        BoolFalse(): false;
+        BoolVar(a): tiv(t,a);
+    }    
+}
+
+
 main() {
     x = "((z\\/x)/\\((F/\\T)->(x\\/Not_y)))";
-    y = s2bf(x);
-    z = bf2s(y);
-    vars = bf2t(y);
-    println(y);
-    println(z);
+    form = s2bf(x);
+    str = bf2s(form);
+    vars = bf2t(form);
+    out = evf(form, vars);
+    println(str);
     println(vars);
+    println(out);
+
 }
