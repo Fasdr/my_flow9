@@ -1,6 +1,6 @@
 import lingo/pegcode/driver;
 
-BoolForm ::= BoolAdd,BoolMult,BoolImpl,BoolTrue,BoolFalse,BoolVar,BoolNeg;
+BoolForm ::= BoolAdd,BoolMult,BoolImpl,BoolNeg,BoolTrue,BoolFalse,BoolVar;
 BoolAdd(a1:BoolForm,a2:BoolForm);
 BoolMult(a1:BoolForm,a2:BoolForm);
 BoolImpl(a1:BoolForm,a2:BoolForm);
@@ -10,7 +10,7 @@ BoolFalse();
 BoolVar(a:string);
 
 s2bf(str : string) -> BoolForm {
-    b_gr = "#include H:\bool.lingo";
+    b_gr = "#include bool.lingo";
     parsic(
         compilePegGrammar(b_gr),
         str,
@@ -20,11 +20,20 @@ s2bf(str : string) -> BoolForm {
 
 bf2s(f : BoolForm) -> string {
     switch (f) {
-        BoolAdd(a1,a2): "(" + bf2s(a1) ws "\\/" +  bf2s(a2) + ")";
-        Bool(a1,a2): "(" + bf2s(a1) ws "\\/" +  bf2s(a2) + ")";
+        BoolAdd(a1,a2): "(" + bf2s(a1) + "\\/" +  bf2s(a2) + ")";
+        BoolMult(a1,a2): "(" + bf2s(a1) + "/\\" +  bf2s(a2) + ")";
+        BoolImpl(a1,a2): "(" + bf2s(a1) + "->" + bf2s(a2) + ")";
+        BoolNeg(a1): "Not_"  + bf2s(a1);
+        BoolTrue(): "T";
+        BoolFalse(): "F";
+        BoolVar(a): a;
     }
 }
 
 main() {
-    println(s2bf("Not ((F/\\T)->(x\\/y))"));
+    x = "((F/\\T)->(x\\/Not_y))";
+    y = s2bf(x);
+    z = bf2s(y);
+    println(y);
+    println(z);
 }
