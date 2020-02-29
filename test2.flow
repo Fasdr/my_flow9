@@ -1,0 +1,8 @@
+import string;
+
+main() {
+    println((true||false));
+    println((true&&false));
+    println((false->true));
+    println((!true));
+}
