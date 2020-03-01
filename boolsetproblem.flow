@@ -1,5 +1,6 @@
 import lingo/pegcode/driver;
 import ds/tree;
+import math/math;
 
 BoolForm ::= BoolAdd,BoolMult,BoolImpl,BoolNeg,BoolTrue,BoolFalse,BoolVar;
 BoolAdd(a1:BoolForm,a2:BoolForm);
@@ -9,6 +10,35 @@ BoolNeg(a1:BoolForm);
 BoolTrue();
 BoolFalse();
 BoolVar(a:string);
+
+//рандомное чилсо от 0 до r-1
+myrandom(r : int) -> int {
+    d = random();
+    n = d*i2d(r);
+    floor(n);
+}
+
+//генерируем случайную формулу с ограничением на максимальное число переменных, глубину дерева и контороль роста дерева
+randomformgen(maxdepth : int, maxnumbofvars : int, grate : int) -> BoolForm {
+    vars = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m","n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"];
+    br = myrandom(maxdepth*grate);
+    if (br == 0) {
+        fr = myrandom(6);
+        if (fr == 0) {BoolTrue()}
+        else if (fr == 1) {BoolFalse()}
+        else {BoolVar(vars[myrandom(maxnumbofvars)])}
+    }
+    else{
+        fr = myrandom(4);
+        if (fr == 0) {BoolAdd(randomformgen(maxdepth - 1, maxnumbofvars, grate),randomformgen(maxdepth - 1, maxnumbofvars, grate))}
+        else if (fr == 1) {BoolMult(randomformgen(maxdepth - 1, maxnumbofvars, grate),randomformgen(maxdepth - 1, maxnumbofvars, grate))}
+        else if (fr == 2) {BoolImpl(randomformgen(maxdepth - 1, maxnumbofvars, grate),randomformgen(maxdepth - 1, maxnumbofvars, grate))}
+        else {BoolNeg(randomformgen(maxdepth - 1, maxnumbofvars, grate))}
+    }
+}
+
+
+
 
 //парсим строки в формулы
 s2bf(str : string) -> BoolForm {
@@ -61,10 +91,11 @@ tiv(t : Tree<string, bool>, s : string) -> bool {
 
 //вычисляем формулы
 evf(f : BoolForm, t : Tree<string, bool>) -> bool {
+        impl = \x,y -> (!x)||y;
         switch (f) {
         BoolAdd(a1,a2): evf(a1,t)||evf(a2,t);
-        BoolMult(a1,a2):  evf(a1,t)&&evf(a2,t);
-        BoolImpl(a1,a2): evf(a1,t)->evf(a2,t);
+        BoolMult(a1,a2): evf(a1,t)&&evf(a2,t);
+        BoolImpl(a1,a2): impl(evf(a1,t),evf(a2,t));
         BoolNeg(a1): !evf(a1,t);
         BoolTrue(): true;
         BoolFalse(): false;
@@ -113,10 +144,24 @@ chf(str : string) -> bool {
     }
 }
 
+//проверяем формулу
+chff(form : BoolForm) -> bool {
+    vars = t2mts(bf2t(form));
+    out = findiDef(map(vars,(\vs->evf(form, vs))),\x->x,-1);
+    if (out == -1) {
+        false;
+    }
+    else {
+        println(vars[out]);
+        true;
+    }
+}
+
 main() {
-    x = "((z\\/x)/\\((Not_a/\\T)->(b\\/Not_y)))";
-    xx = "(Not_a/\\Not_b)";
-    f = s2bf(x);
-    println(bf2s(f));
-    println(chf(x));
+    maxdepth = 15;
+    maxnumbofvars = 5;
+    grate = 10;
+    form = randomformgen(maxdepth,maxnumbofvars,grate);
+    println(bf2s(form));
+    println(chff(form));
 }

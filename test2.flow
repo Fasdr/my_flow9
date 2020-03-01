@@ -1,8 +1,36 @@
 import string;
+import math/math;
 
 main() {
     println((true||false));
     println((true&&false));
     println((false->true));
     println((!true));
+    println(myrandom(9));
+    println(myrandom(9));
+    println(myrandom(9));
+    println(myrandom(9));
+    println(myrandom(9));
+    println(myrandom(9));
+    println(true->false);
+    println(myrandom(9));
+    println(myrandom(9));
+    println(myrandom(9));
+    println(myrandom(9));
+    println(myrandom(9));
+    println(myrandom(9));
+    println(myrandom(9));
+    println(myrandom(9));
+    println(myrandom(9));
+    fr = myrandom(3);
+    if (fr == 0) {println(true)}
+    else if (fr == 1) {println(false)}
+    else if (fr == 2) {println(0)}
+    else {println(1)}
+}
+
+myrandom(r : int) -> int {
+    d = random();
+    n = d*i2d(r);
+    floor(n);
 }
