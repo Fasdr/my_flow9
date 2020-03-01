@@ -86,7 +86,7 @@ mt2mt2(ml : [Tree<?, ??>], tc : Tree<?, ??>, mr : [Tree<?, ??>] ) -> [Tree<?, ??
     concatA(map(mr, f));
 }
 
-//прикрепляем массив деревьев
+//прикрепляем массив деревьев к массиву деревьев
 mt2mt3(ml : [Tree<?, ??>], mc : [Tree<?, ??>], mr : [Tree<?, ??>] ) -> [Tree<?, ??>] {
     concatA(map(mc,(\c->mt2mt2(ml,c,mr))));
 }
@@ -114,7 +114,9 @@ chf(str : string) -> bool {
 }
 
 main() {
-    xx = "((z\\/x)/\\((Not_a/\\T)->(b\\/Not_y)))";
-    x = "(Not_a/\\Not_b)";
+    x = "((z\\/x)/\\((Not_a/\\T)->(b\\/Not_y)))";
+    xx = "(Not_a/\\Not_b)";
+    f = s2bf(x);
+    println(bf2s(f));
     println(chf(x));
 }
