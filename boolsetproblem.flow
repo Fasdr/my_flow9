@@ -19,7 +19,7 @@ myrandom(r : int) -> int {
 }
 
 //генерируем случайную формулу с ограничением на максимальное число переменных, глубину дерева и контороль роста дерева
-randomformgen(maxdepth : int, maxnumbofvars : int, grate : int) -> BoolForm {
+randomformgen(maxdepth : int, maxnumbofvars : int, grate : int, multrate : int) -> BoolForm {
     vars = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m","n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"];
     br = myrandom(maxdepth*grate);
     if (br == 0) {
@@ -29,11 +29,11 @@ randomformgen(maxdepth : int, maxnumbofvars : int, grate : int) -> BoolForm {
         else {BoolVar(vars[myrandom(maxnumbofvars)])}
     }
     else{
-        fr = myrandom(4);
-        if (fr == 0) {BoolAdd(randomformgen(maxdepth - 1, maxnumbofvars, grate),randomformgen(maxdepth - 1, maxnumbofvars, grate))}
-        else if (fr == 1) {BoolMult(randomformgen(maxdepth - 1, maxnumbofvars, grate),randomformgen(maxdepth - 1, maxnumbofvars, grate))}
-        else if (fr == 2) {BoolImpl(randomformgen(maxdepth - 1, maxnumbofvars, grate),randomformgen(maxdepth - 1, maxnumbofvars, grate))}
-        else {BoolNeg(randomformgen(maxdepth - 1, maxnumbofvars, grate))}
+        fr = myrandom(3 + multrate);
+        if (fr == 0) {BoolNeg(randomformgen(maxdepth - 1, maxnumbofvars, grate, multrate))}
+        else if (fr == 1) {BoolAdd(randomformgen(maxdepth - 1, maxnumbofvars, grate, multrate),randomformgen(maxdepth - 1, maxnumbofvars, grate, multrate))}
+        else if (fr == 2) {BoolImpl(randomformgen(maxdepth - 1, maxnumbofvars, grate, multrate),randomformgen(maxdepth - 1, maxnumbofvars, grate, multrate))}
+        else {BoolMult(randomformgen(maxdepth - 1, maxnumbofvars, grate, multrate),randomformgen(maxdepth - 1, maxnumbofvars, grate, multrate))}
     }
 }
 
@@ -144,15 +144,23 @@ chf(str : string) -> bool {
     }
 }
 
+//выписываем значения в строку
+t2ms (t : Tree<string, bool>) -> string {
+    switch (t) {
+        TreeEmpty() : "";
+        TreeNode(key, value, left, right, depth) : key + " = " + b2s(value) + " ; " + t2ms(left) + t2ms(right) ;
+    }
+}
+
 //проверяем формулу
 chff(form : BoolForm) -> bool {
     vars = t2mts(bf2t(form));
     out = findiDef(map(vars,(\vs->evf(form, vs))),\x->x,-1);
     if (out == -1) {
         false;
-    }
+    } 
     else {
-        println(vars[out]);
+        println(t2ms(vars[out]));
         true;
     }
 }
@@ -161,7 +169,8 @@ main() {
     maxdepth = 15;
     maxnumbofvars = 5;
     grate = 10;
-    form = randomformgen(maxdepth,maxnumbofvars,grate);
+    multrate = 1;
+    form = randomformgen(maxdepth,maxnumbofvars,grate,multrate);
     println(bf2s(form));
     println(chff(form));
 }
