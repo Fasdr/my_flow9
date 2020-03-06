@@ -165,12 +165,77 @@ chff(form : BoolForm) -> bool {
     }
 }
 
+//убрать импликации
+notimpl (f : BoolForm) -> BoolForm {
+    switch (f) {
+        BoolAdd(a1,a2): BoolAdd(notimpl(a1),notimpl(a2));
+        BoolMult(a1,a2): BoolMult(notimpl(a1),notimpl(a2));
+        BoolImpl(a1,a2): BoolAdd(BoolNeg(notimpl(a1)),notimpl(a2));
+        BoolNeg(a1): BoolNeg(notimpl(a1));
+        BoolTrue(): BoolTrue();
+        BoolFalse(): BoolFalse();
+        BoolVar(a): BoolVar(a);
+    }    
+}
+
+//ищем отрицания
+sfornot (f : BoolForm) -> BoolForm {
+    switch (f) {
+        BoolAdd(a1,a2): BoolAdd(sfornot(a1),sfornot(a2));
+        BoolMult(a1,a2): BoolMult(sfornot(a1),sfornot(a2));
+        BoolNeg(a1): findnot(a1);
+        BoolTrue(): BoolTrue();
+        BoolFalse(): BoolFalse();
+        BoolVar(a): BoolVar(a);
+        default: f;
+    }    
+}
+
+//протаскиваем отрицание
+findnot (f : BoolForm) -> BoolForm {
+    switch (f) {
+        BoolAdd(a1,a2): BoolMult(findnot(a1),findnot(a2));
+        BoolMult(a1,a2): BoolAdd(findnot(a1),findnot(a2));
+        BoolNeg(a1): sfornot(a1);
+        BoolTrue(): BoolFalse();
+        BoolFalse(): BoolTrue();
+        BoolVar(a): BoolNeg(BoolVar(a));
+        default: f;
+    }    
+}
+
+//BoolAdd(a1,a2): "(" + bf2s(a1) + "\\/" +  bf2s(a2) + ")"
+
+//ищем или
+sforor (f : BoolForm) -> BoolForm {
+    switch (f) {
+        BoolAdd(a1,a2): BoolAdd(notimpl(a1),notimpl(a2));
+        BoolMult(a1,a2): BoolMult(sforor(a1),sforor(a2));
+        default: f;
+    }    
+}
+
+//нашли или
+sforor (f : BoolForm) -> BoolForm {
+    switch (f) {
+        BoolAdd(a1,a2): BoolAdd(notimpl(a1),notimpl(a2));
+        BoolMult(a1,a2): BoolMult(sforor(a1),sforor(a2));
+        default: f;
+    }    
+}
+
+//переключиться на деревья
+
+
 main() {
-    maxdepth = 15;
-    maxnumbofvars = 5;
+    maxdepth = 3;
+    maxnumbofvars = 2;
     grate = 10;
-    multrate = 1;
+    multrate = 0;
     form = randomformgen(maxdepth,maxnumbofvars,grate,multrate);
     println(bf2s(form));
-    println(chff(form));
+    woutiumpl = notimpl(form);
+    println(bf2s(woutiumpl));
+    println(bf2s(sfornot(woutiumpl)));
+
 }
