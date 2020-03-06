@@ -1,6 +1,7 @@
 import lingo/pegcode/driver;
 import ds/tree;
 import math/math;
+import ds/set;
 
 BoolForm ::= BoolAdd,BoolMult,BoolImpl,BoolNeg,BoolTrue,BoolFalse,BoolVar;
 BoolAdd(a1:BoolForm,a2:BoolForm);
@@ -206,28 +207,83 @@ findnot (f : BoolForm) -> BoolForm {
 
 //BoolAdd(a1,a2): "(" + bf2s(a1) + "\\/" +  bf2s(a2) + ")"
 
+//когда нашли или
+dowor (a1 : BoolForm, a2 : BoolForm) -> BoolForm {
+    switch (a1) {
+        BoolAdd(b1,b2): switch (a2) {
+            BoolAdd(c1,c2): BoolAdd(sforor(a1),sforor(a2));
+            BoolMult(c1,c2): BoolMult(BoolAdd(a1,c1),BoolAdd(a1,c2));
+            default: BoolAdd(sforor(a1),a2);
+            }
+        BoolMult(b1,b2): BoolMult(BoolAdd(b1,a2),BoolAdd(b2,a2));
+        default: switch (a2) {
+            BoolAdd(c1,c2): BoolAdd(a1,sforor(a2));
+            BoolMult(c1,c2): BoolMult(BoolAdd(a1,c1),BoolAdd(a1,c2));
+            default: BoolAdd(a1,a2);
+            }
+    }
+}
+
 //ищем или
 sforor (f : BoolForm) -> BoolForm {
     switch (f) {
-        BoolAdd(a1,a2): BoolAdd(notimpl(a1),notimpl(a2));
+        BoolAdd(a1,a2): dowor(a1,a2);
         BoolMult(a1,a2): BoolMult(sforor(a1),sforor(a2));
         default: f;
     }    
 }
 
-//нашли или
-sforor (f : BoolForm) -> BoolForm {
+//приводим к кнф без подготовительных шагов
+longcnf (f : BoolForm) -> BoolForm {
+    nf = sforor(f);
+    if (f == nf) {
+        f;
+    }
+    else {
+        longcnf(nf);
+    }
+}
+
+//приводим к кнф 
+cnf (f : BoolForm) -> BoolForm {
+    longcnf(sfornot(notimpl(f)));
+}
+
+//кнф в массив на и
+arraycnf (f : BoolForm) -> [[BoolForm]] {
     switch (f) {
-        BoolAdd(a1,a2): BoolAdd(notimpl(a1),notimpl(a2));
-        BoolMult(a1,a2): BoolMult(sforor(a1),sforor(a2));
-        default: f;
-    }    
+        BoolMult(a1,a2): concatA([arraycnf(a1),arraycnf(a2)]);
+        BoolAdd(a1,a2): [arraycnfd(f)];
+        default: [[f]];
+    }
 }
 
-//переключиться на деревья
+//кнф в массив на или
+arraycnfd (f : BoolForm) -> [BoolForm] {
+    switch (f) {
+        BoolAdd(a1,a2): concatA([arraycnfd(a1),arraycnfd(a2)]);
+        default: [f];
+    }
+}
 
+//кнф из массива в сет
+setcnf (ms : [[BoolForm]]) -> Set<Set<BoolForm>> {
+    buildSet(map(ms,buildSet));
+}
 
-main() {
+//печатаем формулу из сета
+nicesetcnfprint (ms : Set<Set<BoolForm>>) -> void {
+    g = \m -> mapSet(m,bf2s);
+    println(mapSet(ms,g));
+}
+
+//печатаем формулу из массива
+nicearraycnfprint (ms : [[BoolForm]]) -> void {
+    g = \m -> map(m,bf2s);
+    println(map(ms,g));
+}
+
+sometest1() -> void {
     maxdepth = 3;
     maxnumbofvars = 2;
     grate = 10;
@@ -236,6 +292,33 @@ main() {
     println(bf2s(form));
     woutiumpl = notimpl(form);
     println(bf2s(woutiumpl));
-    println(bf2s(sfornot(woutiumpl)));
+    sfor = sfornot(woutiumpl);
+    println(bf2s(sfor));
+}
 
+sometest2() -> void {
+    comlowstr = "Not_(a/\\(b\\/(d/\\e)))";
+    form = s2bf(comlowstr);
+    println(bf2s(form));
+    newform = cnf(form);
+    println(bf2s(newform));
+    arrform = arraycnf(newform);
+    nicearraycnfprint(arrform);
+    setform = setcnf(arrform);
+    nicesetcnfprint(setform);
+}
+
+sometest3() -> void {
+    maxdepth = 4;
+    maxnumbofvars = 3;
+    grate = 10;
+    multrate = 1;
+    form = randomformgen(maxdepth,maxnumbofvars,grate,multrate);
+    println(bf2s(form));
+    newform = cnf(form);
+    println(bf2s(newform)); 
+}
+
+main() {
+   sometest2();
 }
