@@ -425,9 +425,9 @@ main() {
 
 ftest() -> void {
     maxdepth = 5;
-    maxnumbofvars = 5;
+    maxnumbofvars = 2;
     grate = 10;
-    multrate = 1;
+    multrate = 2;
     form = randomformgen(maxdepth,maxnumbofvars,grate,multrate);
     println(bf2s(form));
     newform = cnf(form);
