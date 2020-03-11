@@ -249,7 +249,7 @@ cnf (f : BoolForm) -> BoolForm {
     longcnf(sfornot(notimpl(f)));
 }
 
-//кнф в массив на и
+//CNF
 arraycnf (f : BoolForm) -> [[BoolForm]] {
     switch (f) {
         BoolMult(a1,a2): concatA([arraycnf(a1),arraycnf(a2)]);
@@ -273,17 +273,189 @@ setcnf (ms : [[BoolForm]]) -> Set<Set<BoolForm>> {
 
 //печатаем формулу из сета
 nicesetcnfprint (ms : Set<Set<BoolForm>>) -> void {
+    //println(sizeSet(ms));
     g = \m -> mapSet(m,bf2s);
-    println(mapSet(ms,g));
+    ft = mapSet(ms,g);
+    st = mapSet(ft,set2array);
+    println(set2array(st));
 }
 
 //печатаем формулу из массива
 nicearraycnfprint (ms : [[BoolForm]]) -> void {
     g = \m -> map(m,bf2s);
+    println(length(ms));
     println(map(ms,g));
 }
 
+//удобный фильтр
+myfilterSet(s : Set<Set<?>>, fn : (Set<?>) -> bool, tr : (Set<?>) -> Set<?> ) -> Set<Set<?>> {
+    foldSet(s, makeSet(), \acc, x -> {
+        if (fn(x)) {
+            insertSet(acc, tr(x))
+        } else {
+            acc
+        }
+    })
+}
+
+//убираем дизъюнкции с правдой и ложь из конъюнкци
+remtr (ms : Set<Set<BoolForm>>) -> Set<Set<BoolForm>>{
+    g = \x -> !containsSet(x, BoolTrue());
+    f = \x -> removeSet(x, BoolFalse());
+    myfilterSet(ms,g,f);
+}
+
+//проверяем обстановку
+mout (ms : Set<Set<BoolForm>>) -> int {
+    if (isEmptySet(ms)) {
+        1;
+    }
+    else if (containsSet(ms,makeSet())) {
+        -1;
+    }
+    else {
+        0;
+    }
+}
+
+//так как свитч терминальный... а все-таки это пригодилось
+locchangevar (var : BoolForm) -> BoolForm {
+    switch (var) {
+        BoolNeg(a): a;
+        BoolVar(a): BoolNeg(var);
+        default : BoolTrue();
+    }    
+}
+
+//удобное означивание
+neweval (ms : Set<Set<BoolForm>>, var : BoolForm) -> Set<Set<BoolForm>> {
+    notvar = locchangevar(var);
+    g = \x -> !containsSet(x, var);
+    f = \x -> removeSet(x, notvar);
+    myfilterSet(ms,g,f);
+}
+
+//добавляем переменную на выход
+addvar1 (buf : Maybe<Tree<string, bool>>, var : BoolForm) -> Maybe<Tree<string, bool>> {
+    switch (buf) {
+        None(): None();
+        Some(a): switch (var) {
+            BoolNeg(a1): switch (a1) {
+                BoolVar(a2): Some(setTree(a, a2, false));
+                default: None();
+            }
+            BoolVar(a1): Some(setTree(a, a1, true));
+            default: None();
+        } 
+    }
+}
+
+//тернарный оператор не сработал...
+myh (x : BoolForm, y : int, z : Pair<BoolForm, int>) -> Pair<BoolForm, int>{
+    if (z.second>y) {
+        z;
+    }
+    else {
+        Pair(x,y);
+    }
+}
+
+//число вхождений переменной в формулу
+quf (ms : Set<Set<BoolForm>>, var : BoolForm) -> int {
+    f = \x, y -> x + b2i(containsSet(y,var)||containsSet(y,locchangevar(var)));
+    foldSet(ms, 0, f);
+}
+
+//чисто так, но оптимизация кода полностью отутсвует...
+//DPLL без приведения к правильному cnf
+mydpll (ms : Set<Set<BoolForm>>,buf : Maybe<Tree<string, bool>>) -> Maybe<Tree<string, bool>> {
+    
+    //шаг 0
+    ch = mout(ms);
+    if (ch == 1) {
+        buf;
+    }
+    else if (ch == 0){
+        //шаг 1
+        f = \x -> (sizeSet(x) == 1);
+        ns = filterSet(ms, f);
+        if (!(isEmptySet(ns))) {
+            nss = set2array(mapSet(ns, set2array));
+            myvar = nss[0][0];
+            mydpll(neweval(ms,myvar),addvar1(buf,myvar));
+        }
+        else {
+            //шаг 2
+            nms = mergeSetsA(set2array(ms));
+            g = \x -> !(containsSet(nms, locchangevar(x)));
+            fnms = filterSet(nms, g);
+            if (!(isEmptySet(fnms))) {
+                fnmss = set2array(fnms);
+                myvar = fnmss[0];
+                mydpll(neweval(ms,myvar),addvar1(buf,myvar));
+            }
+            else {
+                //шаг 3
+                //ветвимся по самой частой по вхождению переменной
+                tnms = nms.tree;
+                gf = \x, y -> quf(ms, x);
+                ftnms = mapTree2(tnms, gf);
+                
+                fvar = foldTree(ftnms, Pair(BoolTrue(), 0), myh).first;
+                out1 = mydpll(neweval(ms,fvar),addvar1(buf,fvar));
+                if (out1 == None()) {
+                    nfvar = locchangevar(fvar);
+                    mydpll(neweval(ms,nfvar),addvar1(buf,nfvar));
+                }
+                else {
+                    out1;
+                }
+            }
+        }
+
+    }
+    else {
+        None();
+    }
+}
+
+main() {
+   ftest();
+}
+
+ftest() -> void {
+    maxdepth = 5;
+    maxnumbofvars = 5;
+    grate = 10;
+    multrate = 1;
+    form = randomformgen(maxdepth,maxnumbofvars,grate,multrate);
+    println(bf2s(form));
+    newform = cnf(form);
+    arrform = arraycnf(newform);
+    setform = setcnf(arrform);
+    simpsetform = remtr(setform);
+    nicesetcnfprint(simpsetform);
+    println(mydpll(simpsetform,Some(makeTree()))); 
+
+}
+
 sometest1() -> void {
+    comlowstr = "((a\\/Not_b)/\\((d\\/(a\\/Not_b))/\\(Not_d\\/(Not_a\\/b))))";
+    comlowstr2 = "(Not_(a/\\(b\\/(d/\\e)))->Not_(a/\\(b\\/(d/\\e))))";
+    form = s2bf(comlowstr);
+    println(bf2s(form));
+    newform = cnf(form);
+    //println(bf2s(newform));
+    arrform = arraycnf(newform);
+    //nicearraycnfprint(arrform);
+    setform = setcnf(arrform);
+    //nicesetcnfprint(setform);
+    simpsetform = remtr(setform);
+    nicesetcnfprint(simpsetform);
+    println(mydpll(simpsetform,Some(makeTree())));
+}
+
+sometest2() -> void {
     maxdepth = 3;
     maxnumbofvars = 2;
     grate = 10;
@@ -296,18 +468,6 @@ sometest1() -> void {
     println(bf2s(sfor));
 }
 
-sometest2() -> void {
-    comlowstr = "Not_(a/\\(b\\/(d/\\e)))";
-    form = s2bf(comlowstr);
-    println(bf2s(form));
-    newform = cnf(form);
-    println(bf2s(newform));
-    arrform = arraycnf(newform);
-    nicearraycnfprint(arrform);
-    setform = setcnf(arrform);
-    nicesetcnfprint(setform);
-}
-
 sometest3() -> void {
     maxdepth = 4;
     maxnumbofvars = 3;
@@ -317,8 +477,4 @@ sometest3() -> void {
     println(bf2s(form));
     newform = cnf(form);
     println(bf2s(newform)); 
-}
-
-main() {
-   sometest2();
 }
