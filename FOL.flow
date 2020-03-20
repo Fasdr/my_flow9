@@ -1,0 +1,36 @@
+import lingo/pegcode/driver;
+
+import ds/array;
+
+
+
+FOLForm ::= FOLPred, FOLEq, FOLAll, FOLExist, FOLCon, FOLDis, FOLImpl, FOLNeg;
+FOLTerm ::= FOLVar, FOLFunc;
+FOLFunc(name : string, variables : [FOLTerm]);
+FOLVar(name : string);
+FOLPred(name : string, variables : [FOLTerm]);
+FOLEq(term1 : FOLTerm, term2 : FOLTerm);
+FOLAll(bound : FOLVar, form : FOLForm);
+FOLExist(bound : FOLVar, form : FOLForm);
+FOLCon(form1 : FOLForm, form2 : FOLForm);
+FOLDis(form1 : FOLForm, form2 : FOLForm);
+FOLImpl(form1 : FOLForm, form2 : FOLForm);
+FOLNeg(form : FOLForm);
+
+main() {
+    test3();
+}
+
+test1() -> void {
+    println(FOLAll(FOLVar("sratr worknig"),FOLNeg(FOLEq(FOLVar("sratr worknig"),FOLVar("sratr worknig")))));    
+}
+
+test2() -> void {
+    f = FOLFunc("f",[FOLVar("sratr worknig"),FOLVar("sratr worknig"),FOLVar("sratr worknig")]);
+    println(f);
+}
+
+test3() -> void {
+    p = FOLPred("P",[FOLVar("sratr worknig"),FOLVar("sratr worknig"),FOLVar("sratr worknig")]);
+    println(p);
+}
