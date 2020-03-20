@@ -17,8 +17,19 @@ FOLDis(form1 : FOLForm, form2 : FOLForm);
 FOLImpl(form1 : FOLForm, form2 : FOLForm);
 FOLNeg(form : FOLForm);
 
+//парсим строки в формулы
+s2pf(str : string) -> BoolForm {
+    b_gr = "#include bool.lingo";
+    parsic(
+        compilePegGrammar(b_gr),
+        str,
+        defaultPegActions
+    )
+}
+
 main() {
-    test3();
+    mystring = "A_x(E_y(x=y))";
+    
 }
 
 test1() -> void {
