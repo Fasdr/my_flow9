@@ -2,10 +2,10 @@ Form = Pred | Eq | All | Exist | Con | Dis | Impl | Neg;
 
 Term = Func | Var;
 
-Var = letter+ $s ","? {FOLVar($s)};
-Func = letter+ $s "(" Term*:t ")" ","? {FOLFunc($s, :t)};
+Var = (letter+digit*) $s ","? {FOLVar($s)};
+Func = (letter+digit*) $s "(" Term*:t ")" ","? {FOLFunc($s, :t)};
 
-Pred = bletter+ $s "(" Term*:t ")" {FOLPred($s, :t)};
+Pred = (bletter+digit*) $s "(" Term*:t ")" {FOLPred($s, :t)};
 Eq = Term:t1 "=" Term:t2 {FOLEq(:t1, :t2)};
 All = "A_" Var:v "." Form:f  {FOLAll(:v, :f)};
 Exist = "E_" Var:v "." Form:f  {FOLExist(:v, :f)};
@@ -16,4 +16,5 @@ Neg = "Not_"  Form:f  {FOLNeg(:f)};
 
 letter = 'a'-'z';
 bletter = 'A'-'Z';
+digit = '0'-'9';
 ws = (' ' | '\t' | '\n' | '\r')*;

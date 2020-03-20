@@ -1,6 +1,9 @@
 import lingo/pegcode/driver;
 
 import ds/array;
+import ds/set;
+import ds/tree;
+
 
 FOLTerm ::= FOLVar, FOLFunc;
 
@@ -18,6 +21,8 @@ FOLDis(form1 : FOLForm, form2 : FOLForm);
 FOLImpl(form1 : FOLForm, form2 : FOLForm);
 FOLNeg(form : FOLForm);
 
+
+curnumbofvars = ref 0;
 
 //парсим строки в формулы
 s2pf(str : string) -> FOLForm {
@@ -51,14 +56,70 @@ pf2s(fform : FOLForm) -> string {
     }
 }
 
+
+
+
+//даем переменным уникальные имена 
+newvar() -> FOLVar {
+    curnumbofvars := ^curnumbofvars + 1 ;
+    FOLVar("x"+i2s(^curnumbofvars));
+}
+
+shortcutall(fform : FOLAll, t : Tree<FOLVar, FOLVar>) -> FOLAll {
+    nvar = newvar();
+    FOLAll(nvar, befrenamevarsinform(fform.form, setTree(t, fform.bound, nvar)));
+}
+
+shortcutexist(fform : FOLExist, t : Tree<FOLVar, FOLVar>) -> FOLExist {
+    nvar = newvar();
+    FOLExist(nvar, befrenamevarsinform(fform.form, setTree(t, fform.bound, nvar)));
+}
+
+befrenamevarsinform(fform : FOLForm, t : Tree<FOLVar, FOLVar>) -> FOLForm {
+    g = \x -> befrenamevarsinterm(x, t);
+    switch (fform) {
+        FOLPred(name, variables): FOLPred(name,  map(variables,g));
+        FOLEq(term1, term2): FOLEq(befrenamevarsinterm(term1, t), befrenamevarsinterm(term2, t));
+        FOLAll(bound, form): shortcutall(fform, t);
+        FOLExist(bound, form): shortcutexist(fform, t);
+        FOLCon(form1, form2): FOLCon(befrenamevarsinform(form1,t), befrenamevarsinform(form2,t));
+        FOLDis(form1, form2): FOLDis(befrenamevarsinform(form1,t), befrenamevarsinform(form2,t));
+        FOLImpl(form1, form2): FOLImpl(befrenamevarsinform(form1,t), befrenamevarsinform(form2,t));
+        FOLNeg(form): FOLNeg(befrenamevarsinform(form,t));
+    }
+}
+
+befrenamevarsinterm(tterm : FOLTerm, t : Tree<FOLVar, FOLVar>) -> FOLTerm {
+    g = \x -> befrenamevarsinterm(x, t);
+    switch (tterm) {
+        FOLVar(name): lookupTreeDef(t, FOLVar(name), FOLVar(name));
+        FOLFunc(name, variables): FOLFunc(name, map(variables,g));
+    }
+}
+
+pfuvar(fform : FOLForm) -> FOLForm {
+    befrenamevarsinform(fform, makeTree());
+}
+
+
 main() {
-     test1();
+     test2();
+
 }
 
 test1() -> void {
-    mystring = "A_x.E_y.Not_(P(x)->Q(y))"; 
+    mystring = "A_x.E_y.Not_(P(g(x))->Q(y))"; 
     println(mystring);
     out = s2pf(mystring);
     println(out);
+    println(pf2s(out));
+}
+
+test2() -> void {
+    //mystring = "A_x.E_y.Not_(P(g(x))->Q(y))"; 
+    mystring = "E_y.A_x.(P(x,y,z)/\\E_x.G(x,y,t))";
+    println(mystring);
+    in = s2pf(mystring);
+    out = pfuvar(in);
     println(pf2s(out));
 }
