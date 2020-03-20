@@ -1,18 +1,18 @@
 Form = Pred | Eq | All | Exist | Con | Dis | Impl | Neg;
 
-Term = Var | Func;
+Term = Func | Var;
 
 Var = letter+ $s ","? {FOLVar($s)};
 Func = letter+ $s "(" Term*:t ")" ","? {FOLFunc($s, :t)};
 
 Pred = bletter+ $s "(" Term*:t ")" {FOLPred($s, :t)};
 Eq = Term:t1 "=" Term:t2 {FOLEq(:t1, :t2)};
-All = "A_" Var:v "(" Form:f ")" {FOLAll(:v, :f)};
-Exist = "E_" Var:v "(" Form:f ")" {FOLExist(:v, :f)};
-Con = "(" Form:f1 ")"  "/\\"   "(" Form:f2 ")" {FOLCon(:f1, :f2)};
-Dis = "(" Form:f1 ")"  "\\/"   "(" Form:f2 ")" {FOLDis(:f1, :f2)};
-Impl = "(" Form:f1 ")"  "->"   "(" Form:f2 ")" {FOLImpl(:f1, :f2)};
-Neg = "Not_" "(" Form:f ")" {FOLNeg(:f)};
+All = "A_" Var:v "." Form:f  {FOLAll(:v, :f)};
+Exist = "E_" Var:v "." Form:f  {FOLExist(:v, :f)};
+Con = "(" Form:f1  "/\\"  Form:f2 ")" {FOLCon(:f1, :f2)};
+Dis = "(" Form:f1  "\\/"  Form:f2 ")" {FOLDis(:f1, :f2)};
+Impl = "(" Form:f1 "->"  Form:f2 ")" {FOLImpl(:f1, :f2)};
+Neg = "Not_"  Form:f  {FOLNeg(:f)};
 
 letter = 'a'-'z';
 bletter = 'A'-'Z';

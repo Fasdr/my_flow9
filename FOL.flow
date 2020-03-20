@@ -53,53 +53,21 @@ pf2s(fform : FOLForm) -> string {
     switch (fform) {
         FOLPred(name, variables): name + "(" + myconcatstrs(map(variables,t2s)) + ")";
         FOLEq(term1, term2): t2s(term1) + "=" + t2s(term2);
-        FOLAll(bound, form): "A_" + t2s(bound) + "(" + pf2s(form) + ")";
-        FOLExist(bound, form): "E_" + t2s(bound) + "(" + pf2s(form) + ")";
-        FOLCon(form1, form2): "(" + pf2s(form1) + ")" + "/\\" +  "(" + pf2s(form2) + ")";
-        FOLDis(form1, form2): "(" + pf2s(form1) + ")" + "\\/" +  "(" + pf2s(form2) + ")";
-        FOLImpl(form1, form2): "(" + pf2s(form1) + ")" + "->" +  "(" + pf2s(form2) + ")";
-        FOLNeg(form): "Not_"  + "(" + pf2s(form) + ")";
+        FOLAll(bound, form): "A_" + t2s(bound) + "." + pf2s(form);
+        FOLExist(bound, form): "E_" + t2s(bound) + "." + pf2s(form);
+        FOLCon(form1, form2): "(" + pf2s(form1) +  "/\\"  + pf2s(form2) + ")";
+        FOLDis(form1, form2): "(" + pf2s(form1) +  "\\/"  + pf2s(form2) + ")";
+        FOLImpl(form1, form2): "(" + pf2s(form1) +  "->"  + pf2s(form2) + ")";
+        FOLNeg(form): "Not_"  + pf2s(form);
     }
 }
 
 main() {
-     test7();
+     test1();
 }
 
 test1() -> void {
-    println(FOLAll(FOLVar("sratr worknig"),FOLNeg(FOLEq(FOLVar("sratr worknig"),FOLVar("sratr worknig")))));    
-}
-
-test2() -> void {
-    f = FOLFunc("f",[FOLVar("sratr worknig"),FOLVar("sratr worknig"),FOLVar("sratr worknig")]);
-    println(f);
-}
-
-test3() -> void {
-    p = FOLPred("P",[FOLVar("x"),FOLVar("x"),FOLVar("x")]);
-    println(p);
-}
-
-test4() -> void {
-    f = FOLCon(FOLNeg(FOLAll(FOLVar("x"),FOLPred("P",[FOLVar("x"),FOLVar("x"),FOLVar("x")]))),(FOLEq(FOLVar("y"),FOLVar("y"))));
-    println(pf2s(f));
-}
-
-test5() -> void {
-    mystring = "A_x(E_y(x=y))"; 
-    println(mystring);
-    out = s2pf(mystring);
-    println(out);
-    println(pf2s(out));
-}
-
-test6() -> void {
-    println(pf2s(FOLAll(FOLVar("x"),FOLExist(FOLVar("y"),FOLEq(FOLVar("x"),FOLVar("y"))))));
-}
-
-test7() -> void {
-    //mystring = "(P(x,y,z))\\/((A_x(E_y(f(x,y,z)=g(m,n,p)))))"; 
-    mystring = "(P(x))\\/(G(z))";
+    mystring = "A_x.E_y.Not_(P(x)->Q(y))"; 
     println(mystring);
     out = s2pf(mystring);
     println(out);
