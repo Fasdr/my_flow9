@@ -2,12 +2,13 @@ import lingo/pegcode/driver;
 
 import ds/array;
 
+FOLTerm ::= FOLVar, FOLFunc;
 
+FOLVar(name : string);
+FOLFunc(name : string, variables : [FOLTerm]);
 
 FOLForm ::= FOLPred, FOLEq, FOLAll, FOLExist, FOLCon, FOLDis, FOLImpl, FOLNeg;
-FOLTerm ::= FOLVar, FOLFunc;
-FOLFunc(name : string, variables : [FOLTerm]);
-FOLVar(name : string);
+
 FOLPred(name : string, variables : [FOLTerm]);
 FOLEq(term1 : FOLTerm, term2 : FOLTerm);
 FOLAll(bound : FOLVar, form : FOLForm);
@@ -17,9 +18,10 @@ FOLDis(form1 : FOLForm, form2 : FOLForm);
 FOLImpl(form1 : FOLForm, form2 : FOLForm);
 FOLNeg(form : FOLForm);
 
+
 //парсим строки в формулы
-s2pf(str : string) -> BoolForm {
-    b_gr = "#include bool.lingo";
+s2pf(str : string) -> FOLForm {
+    b_gr = "#include FOLparse.lingo";
     parsic(
         compilePegGrammar(b_gr),
         str,
@@ -27,9 +29,41 @@ s2pf(str : string) -> BoolForm {
     )
 }
 
+//можно было поставить тернарный оператор
+concatwithif(n : int, bigstring : string, smallstring : string) -> string {
+    if(n == 0) {smallstring}
+    else {bigstring + "," + smallstring}
+}
+
+//объединяем переменные
+myconcatstrs(strs : [string]) -> string {
+    foldi(strs, "", concatwithif);
+}
+
+//записываем термы в строки
+t2s(tterm : FOLTerm) -> string {
+    switch (tterm) {
+        FOLVar(name): name;    
+        FOLFunc(name, variables): name + "(" + myconcatstrs(map(variables,t2s)) + ")";
+    }
+}
+
+//записываем формулы в строки
+pf2s(fform : FOLForm) -> string {
+    switch (fform) {
+        FOLPred(name, variables): name + "(" + myconcatstrs(map(variables,t2s)) + ")";
+        FOLEq(term1, term2): t2s(term1) + "=" + t2s(term1);
+        FOLAll(bound, form): "A_" + t2s(bound) + "(" + pf2s(form) + ")";
+        FOLExist(bound, form): "E_" + t2s(bound) + "(" + pf2s(form) + ")";
+        FOLCon(form1, form2): "(" + pf2s(form1) + ")" + "/\\" +  "(" + pf2s(form2) + ")";
+        FOLDis(form1, form2): "(" + pf2s(form1) + ")" + "\\/" +  "(" + pf2s(form2) + ")";
+        FOLImpl(form1, form2): "(" + pf2s(form1) + ")" + "->" +  "(" + pf2s(form2) + ")";
+        FOLNeg(form): "Not_"  + "(" + pf2s(form) + ")";
+    }
+}
+
 main() {
-    mystring = "A_x(E_y(x=y))";
-    
+    test5();    
 }
 
 test1() -> void {
@@ -42,6 +76,18 @@ test2() -> void {
 }
 
 test3() -> void {
-    p = FOLPred("P",[FOLVar("sratr worknig"),FOLVar("sratr worknig"),FOLVar("sratr worknig")]);
+    p = FOLPred("P",[FOLVar("x"),FOLVar("x"),FOLVar("x")]);
     println(p);
+}
+
+test4() -> void {
+    f = FOLCon(FOLNeg(FOLAll(FOLVar("x"),FOLPred("P",[FOLVar("x"),FOLVar("x"),FOLVar("x")]))),(FOLEq(FOLVar("y"),FOLVar("y"))));
+    println(pf2s(f));
+}
+
+test5() -> void {
+    mystring = "A_x(E_y(x=y))"; 
+    println(mystring);
+    out = s2pf(mystring);
+    println(pf2s(out));
 }
