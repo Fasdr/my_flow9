@@ -21,8 +21,13 @@ FOLDis(form1 : FOLForm, form2 : FOLForm);
 FOLImpl(form1 : FOLForm, form2 : FOLForm);
 FOLNeg(form : FOLForm);
 
-
+//глобальные переменные для скорости
 curnumbofvars = ref 0;
+
+quantall : ref Set<FOLVar> = ref makeSet();
+
+quantexist : ref Set<FOLVar> = ref makeSet();
+
 
 //парсим строки в формулы
 s2pf(str : string) -> FOLForm {
@@ -56,21 +61,18 @@ pf2s(fform : FOLForm) -> string {
     }
 }
 
-
-
-
 //даем переменным уникальные имена 
 newvar() -> FOLVar {
     curnumbofvars := ^curnumbofvars + 1 ;
     FOLVar("x"+i2s(^curnumbofvars));
 }
 
-shortcutall(fform : FOLAll, t : Tree<FOLVar, FOLVar>) -> FOLAll {
+nshortcutall(fform : FOLAll, t : Tree<FOLVar, FOLVar>) -> FOLAll {
     nvar = newvar();
     FOLAll(nvar, befrenamevarsinform(fform.form, setTree(t, fform.bound, nvar)));
 }
 
-shortcutexist(fform : FOLExist, t : Tree<FOLVar, FOLVar>) -> FOLExist {
+nshortcutexist(fform : FOLExist, t : Tree<FOLVar, FOLVar>) -> FOLExist {
     nvar = newvar();
     FOLExist(nvar, befrenamevarsinform(fform.form, setTree(t, fform.bound, nvar)));
 }
@@ -80,8 +82,8 @@ befrenamevarsinform(fform : FOLForm, t : Tree<FOLVar, FOLVar>) -> FOLForm {
     switch (fform) {
         FOLPred(name, variables): FOLPred(name,  map(variables,g));
         FOLEq(term1, term2): FOLEq(befrenamevarsinterm(term1, t), befrenamevarsinterm(term2, t));
-        FOLAll(bound, form): shortcutall(fform, t);
-        FOLExist(bound, form): shortcutexist(fform, t);
+        FOLAll(bound, form): nshortcutall(fform, t);
+        FOLExist(bound, form): nshortcutexist(fform, t);
         FOLCon(form1, form2): FOLCon(befrenamevarsinform(form1,t), befrenamevarsinform(form2,t));
         FOLDis(form1, form2): FOLDis(befrenamevarsinform(form1,t), befrenamevarsinform(form2,t));
         FOLImpl(form1, form2): FOLImpl(befrenamevarsinform(form1,t), befrenamevarsinform(form2,t));
@@ -100,6 +102,44 @@ befrenamevarsinterm(tterm : FOLTerm, t : Tree<FOLVar, FOLVar>) -> FOLTerm {
 pfuvar(fform : FOLForm) -> FOLForm {
     befrenamevarsinform(fform, makeTree());
 }
+
+//вытаскиваем кванторы, убираем импликации, вносим отрицание
+ishortcutall(fform : FOLAll, out : FOLForm) -> FOLForm {
+    quantall := insertSet(^quantall, fform.bound);
+    out;
+}
+
+ishortcutexist(fform : FOLExist, out : FOLForm) -> FOLForm {
+    quantexist := insertSet(^quantexist, fform.bound);
+    out;
+}
+
+pfbpr(fform : FOLForm) -> FOLForm {
+    switch (fform) {
+        FOLPred(name, variables): fform;
+        FOLEq(term1, term2): fform;
+        FOLAll(bound, form): 
+        FOLExist(bound, form): 
+        FOLCon(form1, form2): 
+        FOLDis(form1, form2): 
+        FOLImpl(form1, form2): 
+        FOLNeg(form): 
+    }
+}
+
+fpfbpr(fform : FOLForm) -> FOLForm {
+    switch (fform) {
+        FOLPred(name, variables): fform;
+        FOLEq(term1, term2): fform;
+        FOLAll(bound, form): 
+        FOLExist(bound, form): 
+        FOLCon(form1, form2): 
+        FOLDis(form1, form2): 
+        FOLImpl(form1, form2): 
+        FOLNeg(form): 
+    }
+}
+
 
 
 main() {
