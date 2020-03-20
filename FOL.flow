@@ -29,29 +29,18 @@ s2pf(str : string) -> FOLForm {
     )
 }
 
-//можно было поставить тернарный оператор
-concatwithif(n : int, bigstring : string, smallstring : string) -> string {
-    if(n == 0) {smallstring}
-    else {bigstring + "," + smallstring}
-}
-
-//объединяем переменные
-myconcatstrs(strs : [string]) -> string {
-    foldi(strs, "", concatwithif);
-}
-
 //записываем термы в строки
 t2s(tterm : FOLTerm) -> string {
     switch (tterm) {
         FOLVar(name): name;    
-        FOLFunc(name, variables): name + "(" + myconcatstrs(map(variables,t2s)) + ")";
+        FOLFunc(name, variables): name + "(" + strGlue(map(variables,t2s), ",") + ")";
     }
 }
 
 //записываем формулы в строки
 pf2s(fform : FOLForm) -> string {
     switch (fform) {
-        FOLPred(name, variables): name + "(" + myconcatstrs(map(variables,t2s)) + ")";
+        FOLPred(name, variables): name + "(" + strGlue(map(variables,t2s), ",") + ")";
         FOLEq(term1, term2): t2s(term1) + "=" + t2s(term2);
         FOLAll(bound, form): "A_" + t2s(bound) + "." + pf2s(form);
         FOLExist(bound, form): "E_" + t2s(bound) + "." + pf2s(form);
