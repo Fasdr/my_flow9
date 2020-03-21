@@ -146,7 +146,6 @@ fnotpfbpr(fform : FOLForm) -> FOLForm {
 
 
 
-
 //отрисовка формул 2
 myfn(f1 : FOLForm,f2 : FOLForm) -> FOLForm{
     switch (f2) {
@@ -159,6 +158,47 @@ myfn(f1 : FOLForm,f2 : FOLForm) -> FOLForm{
 pf2pf(fform : FOLForm) -> FOLForm {
     foldr(^quants, fform, myfn);
 }
+
+//старое кнф
+
+//когда нашли или
+dowor (a1 : FOLForm, a2 : FOLForm) -> FOLForm {
+    switch (a1) {
+        FOLDis(b1,b2): switch (a2) {
+            FOLDis(c1,c2): FOLDis(sforor(a1),sforor(a2));
+            FOLCon(c1,c2): FOLCon(FOLDis(a1,c1),FOLDis(a1,c2));
+            default: FOLDis(sforor(a1),a2);
+            }
+        FOLCon(b1,b2): FOLCon(FOLDis(b1,a2),FOLDis(b2,a2));
+        default: switch (a2) {
+            FOLDis(c1,c2): FOLDis(a1,sforor(a2));
+            FOLCon(c1,c2): FOLCon(FOLDis(a1,c1),FOLDis(a1,c2));
+            default: FOLDis(a1,a2);
+            }
+    }
+}
+
+//ищем или
+sforor (f : FOLForm) -> FOLForm {
+    switch (f) {
+        FOLDis(a1,a2): dowor(a1,a2);
+        FOLCon(a1,a2): FOLCon(sforor(a1),sforor(a2));
+        default: f;
+    }    
+}
+
+//приводим к кнф 
+cnf (f : FOLForm) -> FOLForm {
+    nf = sforor(f);
+    if (f == nf) {
+        f;
+    }
+    else {
+        cnf(nf);
+    }
+}
+
+
 
 
 
@@ -214,5 +254,5 @@ test5() -> void {
     in = s2pf(mystring);
     out = pfuvar(in);
     nout = pfbpr(out);
-    println(pf2s(pf2pf(nout)));
+    println(pf2s(pf2pf(cnf(nout))));
 }
