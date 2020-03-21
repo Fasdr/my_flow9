@@ -24,7 +24,11 @@ FOLNeg(form : FOLForm);
 //глобальные переменные для скорости
 curnumbofvars = ref 0;
 
+curnumboffunc = ref 0;
+
 quants: ref [FOLForm] = ref [];
+
+squants: ref [FOLVar] = ref [];
 
 
 
@@ -198,7 +202,29 @@ cnf (f : FOLForm) -> FOLForm {
     }
 }
 
+//CNF
+arraycnf (f : FOLForm) -> [[FOLForm]] {
+    switch (f) {
+        FOLCon(a1,a2): concatA([arraycnf(a1),arraycnf(a2)]);
+        FOLDis(a1,a2): [arraycnfd(f)];
+        default: [[f]];
+    }
+}
 
+//кнф в массив на или
+arraycnfd (f : FOLForm) -> [FOLForm] {
+    switch (f) {
+        FOLDis(a1,a2): concatA([arraycnfd(a1),arraycnfd(a2)]);
+        default: [f];
+    }
+}
+
+//кнф сразу в сет
+setcnf (ms : FOLForm) -> Set<Set<FOLForm>> {
+    buildSet(map(arraycnf(cnf(ms)),buildSet));
+}
+
+//Skolen standard form
 
 
 
@@ -255,4 +281,8 @@ test5() -> void {
     out = pfuvar(in);
     nout = pfbpr(out);
     println(pf2s(pf2pf(cnf(nout))));
+}
+
+test6() -> void {
+    
 }
