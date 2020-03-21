@@ -24,9 +24,9 @@ FOLNeg(form : FOLForm);
 //глобальные переменные для скорости
 curnumbofvars = ref 0;
 
-quantall : ref Set<FOLVar> = ref makeSet();
+quants: ref [FOLForm] = ref [];
 
-quantexist : ref Set<FOLVar> = ref makeSet();
+
 
 
 //парсим строки в формулы
@@ -103,14 +103,18 @@ pfuvar(fform : FOLForm) -> FOLForm {
     befrenamevarsinform(fform, makeTree());
 }
 
+
+
+
+
 //вытаскиваем кванторы, убираем импликации, вносим отрицание
-ishortcutall(fform : FOLAll, out : FOLForm) -> FOLForm {
-    quantall := insertSet(^quantall, fform.bound);
+ishortcutexist(fform : FOLExist, out : FOLForm) -> FOLForm {
+    quants := arrayPush(^quants, FOLExist(fform.bound,FOLPred("SOME",[])));
     out;
 }
 
-ishortcutexist(fform : FOLExist, out : FOLForm) -> FOLForm {
-    quantexist := insertSet(^quantexist, fform.bound);
+ishortcutall(fform : FOLAll, out : FOLForm) -> FOLForm {
+    quants := arrayPush(^quants, FOLAll(fform.bound,FOLPred("SOME",[])));
     out;
 }
 
@@ -118,32 +122,48 @@ pfbpr(fform : FOLForm) -> FOLForm {
     switch (fform) {
         FOLPred(name, variables): fform;
         FOLEq(term1, term2): fform;
-        FOLAll(bound, form): 
-        FOLExist(bound, form): 
-        FOLCon(form1, form2): 
-        FOLDis(form1, form2): 
-        FOLImpl(form1, form2): 
-        FOLNeg(form): 
+        FOLAll(bound, form): pfbpr(ishortcutall(fform, form));
+        FOLExist(bound, form): pfbpr(ishortcutexist(fform, form));
+        FOLCon(form1, form2): FOLCon(pfbpr(form1), pfbpr(form2));
+        FOLDis(form1, form2): FOLDis(pfbpr(form1), pfbpr(form2));
+        FOLImpl(form1, form2): pfbpr(FOLDis(FOLNeg(form1),form2));
+        FOLNeg(form): fnotpfbpr(form);
     }
 }
 
-fpfbpr(fform : FOLForm) -> FOLForm {
+fnotpfbpr(fform : FOLForm) -> FOLForm {
     switch (fform) {
-        FOLPred(name, variables): fform;
-        FOLEq(term1, term2): fform;
-        FOLAll(bound, form): 
-        FOLExist(bound, form): 
-        FOLCon(form1, form2): 
-        FOLDis(form1, form2): 
-        FOLImpl(form1, form2): 
-        FOLNeg(form): 
+        FOLPred(name, variables): FOLNeg(fform);
+        FOLEq(term1, term2): FOLNeg(fform);
+        FOLAll(bound, form): fnotpfbpr(ishortcutexist(FOLExist(bound, form), form));
+        FOLExist(bound, form): fnotpfbpr(ishortcutall(FOLAll(bound, form), form));
+        FOLCon(form1, form2): FOLDis(fnotpfbpr(form1), fnotpfbpr(form2));
+        FOLDis(form1, form2): FOLCon(fnotpfbpr(form1), fnotpfbpr(form2));
+        FOLImpl(form1, form2): fnotpfbpr(FOLDis(FOLNeg(form1),form2));
+        FOLNeg(form): pfbpr(form);
     }
+}
+
+
+
+
+//отрисовка формул 2
+myfn(f1 : FOLForm,f2 : FOLForm) -> FOLForm{
+    switch (f2) {
+        FOLAll(bound, form): FOLAll(bound, f1);
+        FOLExist(bound, form): FOLExist(bound, f1);
+        default: f1;
+    }
+}
+
+pf2pf(fform : FOLForm) -> FOLForm {
+    foldr(^quants, fform, myfn);
 }
 
 
 
 main() {
-     test2();
+     test5();
 
 }
 
@@ -162,4 +182,37 @@ test2() -> void {
     in = s2pf(mystring);
     out = pfuvar(in);
     println(pf2s(out));
+}
+
+test3() -> void { 
+    //mystring = "E_y.A_x.(P(x,y,z)/\\E_x.G(x,y,t))";
+    //mystring = "Not_A_x.P(x)";
+    //mystring = "Not_E_x.P(x)";
+    mystring = "(A_x.G(x)->Not_A_x.P(x))";
+    println(mystring);
+    in = s2pf(mystring);
+    out = pfuvar(in);
+    println(pf2s(out));
+    nout = pfbpr(out);
+    println(pf2s(nout));
+}
+
+test4() -> void { 
+    mystring = "A_x.A_y.(E_z.(P(x,z)/\\P(y,z))->E_u.Q(x,y,u))";
+    println(mystring);
+    in = s2pf(mystring);
+    out = pfuvar(in);
+    println(pf2s(out));
+    nout = pfbpr(out);
+    println(pf2s(nout));
+    println(^quants);
+}
+
+test5() -> void { 
+    mystring = "A_x.A_y.(E_z.(P(x,z)/\\P(y,z))->E_u.Q(x,y,u))";
+    println(mystring);
+    in = s2pf(mystring);
+    out = pfuvar(in);
+    nout = pfbpr(out);
+    println(pf2s(pf2pf(nout)));
 }
