@@ -32,7 +32,6 @@ squants: ref [FOLVar] = ref [];
 
 
 
-
 //парсим строки в формулы
 s2pf(str : string) -> FOLForm {
     b_gr = "#include FOLparse.lingo";
@@ -151,7 +150,7 @@ fnotpfbpr(fform : FOLForm) -> FOLForm {
 
 
 //отрисовка формул 2
-myfn(f1 : FOLForm,f2 : FOLForm) -> FOLForm{
+myfn1(f1 : FOLForm,f2 : FOLForm) -> FOLForm{
     switch (f2) {
         FOLAll(bound, form): FOLAll(bound, f1);
         FOLExist(bound, form): FOLExist(bound, f1);
@@ -160,7 +159,7 @@ myfn(f1 : FOLForm,f2 : FOLForm) -> FOLForm{
 }
 
 pf2pf(fform : FOLForm) -> FOLForm {
-    foldr(^quants, fform, myfn);
+    foldr(^quants, fform, myfn1);
 }
 
 //старое кнф
@@ -224,12 +223,81 @@ setcnf (ms : FOLForm) -> Set<Set<FOLForm>> {
     buildSet(map(arraycnf(cnf(ms)),buildSet));
 }
 
-//Skolen standard form
+//Skolem standard form
+//даем функциям уникальные имена 
+newfunc(args : [FOLTerm]) -> FOLFunc {
+    curnumboffunc := ^curnumboffunc + 1 ;
+    FOLFunc("f"+i2s(^curnumboffunc), args);
+}
 
+
+myfndumall(mytree : Tree<FOLVar, FOLFunc>,f2 : FOLAll) -> Tree<FOLVar, FOLFunc> {
+    squants := arrayPush(^squants, f2.bound);
+    mytree;
+}
+
+myfndumexist(mytree : Tree<FOLVar, FOLFunc>,f2 : FOLExist) -> Tree<FOLVar, FOLFunc> {
+    setTree(mytree, f2.bound, newfunc(^squants));
+}
+
+myfn2(mytree : Tree<FOLVar, FOLFunc>,f2 : FOLForm) -> Tree<FOLVar, FOLFunc> {
+    switch (f2) {
+        FOLAll(bound, form): myfndumall(mytree, FOLAll(bound, form));
+        FOLExist(bound, form): myfndumexist(mytree, FOLExist(bound, form));
+        default: mytree;
+    }
+}
+
+//дерево замен и обновление кванторов
+q2t(quan : [FOLForm]) -> Tree<FOLVar, FOLFunc> {
+    fold(quan, makeTree(), myfn2);
+}
+
+// подстановка функций
+myfn4(tterm: FOLTerm, vtree : Tree<FOLVar, FOLFunc>) -> FOLTerm {
+    g = \x -> myfn4(x, vtree);
+    switch (tterm) {
+        FOLVar(name): lookupTreeDef(vtree, FOLVar(name), FOLVar(name));
+        FOLFunc(name, variables): FOLFunc(name, map(variables,g));
+    }
+}
+
+myfn3(fform: FOLForm, vtree : Tree<FOLVar, FOLFunc>) -> FOLForm {
+    g = \x -> myfn4(x, vtree);
+    switch (fform) {
+        FOLPred(name, variables): FOLPred(name, map(variables,g));
+        FOLEq(term1, term2): FOLEq(g(term1),g(term1));
+        FOLNeg(form): FOLNeg(myfn3(form, vtree));
+        default: fform;
+    }
+}
+
+//сколемовская нормальная формула
+snf(form : Set<Set<FOLForm>>) -> Set<Set<FOLForm>> {
+    vtree = q2t(^quants);
+    g = \x -> myfn3(x, vtree);
+    myfn = \x -> mapSet(x, g);
+    mapSet(form, myfn);
+}
+
+//печатаем snf
+nicesetcnfprint (ms : Set<Set<FOLForm>>) -> void {
+    g = \m -> mapSet(m,pf2s);
+    ft = mapSet(ms,g);
+    st = mapSet(ft,set2array);
+    println(set2array(st));
+}
+
+snfprint(form : Set<Set<FOLForm>>) -> void {
+    println("A_");
+    g = \x ->println(t2s(x)+" ");
+    iter(^squants, g);
+    nicesetcnfprint(form);
+}
 
 
 main() {
-     test5();
+    test6();
 
 }
 
@@ -284,5 +352,23 @@ test5() -> void {
 }
 
 test6() -> void {
-    
+    mystring = "E_x.A_y.A_z.E_u.A_v.E_w.P(x,y,z,u,v,w)";
+    println(mystring);
+    in = s2pf(mystring);
+    out1 = pfuvar(in);
+    out2 = pfbpr(out1);
+    out3 = setcnf(out2);
+    out4 = snf(out3);
+    snfprint(out4);
+}
+
+test7() -> void {
+    mystring = "A_x.E_y.E_z.((Not_P(x,y)/\\Q(x,z))\\/R(x,y,z))";
+    println(mystring);
+    in = s2pf(mystring);
+    out1 = pfuvar(in);
+    out2 = pfbpr(out1);
+    out3 = setcnf(out2);
+    out4 = snf(out3);
+    snfprint(out4);
 }
