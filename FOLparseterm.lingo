@@ -1,0 +1,9 @@
+Term = Func | Var;
+
+Var = (letter+digit*) $s ","? {FOLVar($s)};
+Func = (letter+digit*) $s "(" Term*:t ")" ","? {FOLFunc($s, :t)};
+
+letter = 'a'-'z';
+digit = '0'-'9';
+
+ws = (' ' | '\t' | '\n' | '\r')*;

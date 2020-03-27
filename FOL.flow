@@ -42,6 +42,15 @@ s2pf(str : string) -> FOLForm {
     )
 }
 
+s2pt(str : string) -> FOLTerm {
+    b_gr = "#include FOLparseterm.lingo";
+    parsic(
+        compilePegGrammar(b_gr),
+        str,
+        defaultPegActions
+    )
+}
+
 //записываем термы в строки
 t2s(tterm : FOLTerm) -> string {
     switch (tterm) {
@@ -145,7 +154,6 @@ fnotpfbpr(fform : FOLForm) -> FOLForm {
 }
 
 
-//отрисовка формул 2
 myfn1(f1 : FOLForm,f2 : FOLForm) -> FOLForm{
     switch (f2) {
         FOLAll(bound, form): FOLAll(bound, f1);
@@ -322,9 +330,9 @@ usesubvar(vvar : FOLVar, ttree : Tree<FOLVar,FOLTerm>) -> FOLTerm{
 //композиция подстановок
 compsub(tree1 : Tree<FOLVar,FOLTerm>, tree2 : Tree<FOLVar,FOLTerm>) -> Tree<FOLVar,FOLTerm> {
     g = \x -> usesubterm(x, tree2);
-    newtree1 =  mapTree(tree1, g);
-    newtree =   mergeTree(tree2, newtree1);
-    filterTree(newtree, \k,v -> k == v);
+    newtree1 = mapTree(tree1, g);
+    newtree = mergeTree(tree2, newtree1);
+    filterTree(newtree, \k,v -> k != v);
 }
 
 varinterm(vvar : FOLVar, tterm : FOLTerm) -> bool {
@@ -376,12 +384,37 @@ tsuniferr(terms : [Pair<FOLTerm,FOLTerm>]) -> Maybe<Tree<FOLVar,FOLTerm>> {
 
 
 main() {
-    println(varinterm(FOLVar("hi"), FOLFunc("f",[FOLVar("h1i"),FOLVar("hi2")])));
-
+    test9();
 }
 
 
+test9() -> void {
+    f1 = s2pt("f(x,y,g(z,e))");
+    f2 = s2pt("f(a,b,g(c,d))");
+    f3 = s2pt("x");
+    f4 = s2pt("n()");
+    f5 = s2pt("mn");
+    f6 = s2pt("mg");
+    ts1 = [f1,f3,f5];
+    ts2 = [f2,f4,f6];
+    println(map(ts1, \x-> (t2s(x))));
+    println(map(ts2, \x-> (t2s(x))));
+    unif = tsunifer(ts1,ts2);
+    switch (unif){
+        None() : println("can't be unificated!");
+        Some(ttree) : {
+            println(ttree);
+            println(map(ts1, \x-> (t2s(usesubterm(x, ttree)))));
+            println(map(ts2, \x-> (t2s(usesubterm(x, ttree)))));
+        }
+    }
 
+
+}
+
+test8() -> void {
+    println(usesubterm(FOLFunc("f",[FOLVar("x")]), makeTree1(FOLVar("x"),FOLFunc("f",[FOLVar("y")]))));
+}
 
 test1() -> void {
     mystring = "A_x.E_y.Not_(P(g(x))->Q(y))"; 
