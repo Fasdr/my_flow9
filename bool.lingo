@@ -8,3 +8,4 @@ BoolFalse = "F" ws {BoolFalse()};
 BoolVar = letter+ $s ws {BoolVar($s)};
 letter = 'a'-'z';
 ws = (' ' | '\t' | '\n' | '\r')*;
+

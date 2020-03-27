@@ -319,40 +319,64 @@ usesubvar(vvar : FOLVar, ttree : Tree<FOLVar,FOLTerm>) -> FOLTerm{
 
 //дальнейшие функции используют композицию подстановок
 
+//композиция подстановок
+compsub(tree1 : Tree<FOLVar,FOLTerm>, tree2 : Tree<FOLVar,FOLTerm>) -> Tree<FOLVar,FOLTerm> {
+    g = \x -> usesubterm(x, tree2);
+    newtree1 =  mapTree(tree1, g);
+    newtree =   mergeTree(tree2, newtree1);
+    filterTree(newtree, \k,v -> k == v);
+}
+
+varinterm(vvar : FOLVar, tterm : FOLTerm) -> bool {
+    switch (tterm){
+        FOLFunc(name, variables): exists(variables, \x -> varinterm(vvar, x));
+        FOLVar(name): vvar == FOLVar(name);
+    }
+}
 
 tunifer(term1 : FOLTerm, term2 : FOLTerm)-> Maybe<Tree<FOLVar,FOLTerm>> {
     switch (term1) {
-        FOLVar(name): if
+        FOLFunc(name, variables): {
+            switch (term2) {
+                FOLFunc(name2, variables2): if (name == name2) tsunifer(variables, variables2) else None();
+                FOLVar(name2): if (!varinterm(FOLVar(name2),term1)) Some(makeTree1(FOLVar(name2), term1)) else None(); 
+            }
+        }
+
+        FOLVar(name): {
+            switch (term2) {
+                FOLFunc(name2, variables2): if (!varinterm(FOLVar(name),term2)) Some(makeTree1(FOLVar(name), term2)) else None();
+                FOLVar(name2): Some(makeTree1(term1, term2))
+            }
+        }
     }
 }
 
 myfn5(mtree : Maybe<Tree<FOLVar,FOLTerm>>, term : Pair<FOLTerm,FOLTerm>) -> Maybe<Tree<FOLVar,FOLTerm>> {
     switch (mtree) {
         None(): None();
-        Some(ttree): switch (tunifer(Pair(usesubterm(term.first, ttree), usesubterm(term.second, ttree)))) {
+        Some(ttree): switch (tunifer(usesubterm(term.first, ttree), usesubterm(term.second, ttree))) {
             None(): None();
             Some(tttree) : Some(compsub(ttree, tttree));
         }
     }
 }
 
-tsunifer(terms : [Pair<FOLTerm,FOLTerm>]) -> Maybe<Tree<FOLVar,FOLTerm>> -> {
+tsunifer(terms1 : [FOLTerm], terms2 : [FOLTerm]) -> Maybe<Tree<FOLVar,FOLTerm>> {
+    if (length(terms1) == length(terms2)) tsuniferr(zipWith(terms1,terms2,\x,y->Pair(x,y))) else None()
+}
+
+tsuniferr(terms : [Pair<FOLTerm,FOLTerm>]) -> Maybe<Tree<FOLVar,FOLTerm>> {
     foldr(terms, Some(makeTree()), myfn5);
 }
 
 
-//композиция подстановок
-//compsub(tree1 : Tree<FOLVar,FOLTerm>, tree2 : Tree<FOLVar,FOLTerm>) -> Tree<FOLVar,FOLTerm> {
-//    g = \x -> usesubterm(x, tree2);
-//    newtree1 =  mapTree(tree1, g);
-//    newtree =   mergeTree(tree2, newtree1);
-//    f = \k,v -> k == v;
-//    finaltree = filterTree(newtree, f);
-//}
+
+
 
 
 main() {
-    test7();
+    println(varinterm(FOLVar("hi"), FOLFunc("f",[FOLVar("h1i"),FOLVar("hi2")])));
 
 }
 
