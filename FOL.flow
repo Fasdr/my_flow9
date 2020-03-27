@@ -107,9 +107,6 @@ pfuvar(fform : FOLForm) -> FOLForm {
 }
 
 
-
-
-
 //вытаскиваем кванторы, убираем импликации, вносим отрицание
 ishortcutexist(fform : FOLExist, out : FOLForm) -> FOLForm {
     quants := arrayPush(^quants, FOLExist(fform.bound,FOLPred("SOME",[])));
@@ -146,7 +143,6 @@ fnotpfbpr(fform : FOLForm) -> FOLForm {
         FOLNeg(form): pfbpr(form);
     }
 }
-
 
 
 //отрисовка формул 2
@@ -295,11 +291,73 @@ snfprint(form : Set<Set<FOLForm>>) -> void {
     nicesetcnfprint(form);
 }
 
+//унификаторы
+
+//применяем подстановку
+usesubform(fform : FOLForm, ttree : Tree<FOLVar,FOLTerm>) -> FOLForm{
+    g = \x -> usesubterm(x, ttree);
+    switch (fform) {
+        FOLPred(name, variables): FOLPred(name, map(variables,g));
+        FOLEq(term1, term2): FOLEq(g(term1),g(term1));
+        FOLNeg(form): FOLNeg(usesubform(form, ttree));
+        default: fform;
+    }
+}
+
+usesubterm(tterm : FOLTerm, ttree : Tree<FOLVar,FOLTerm>) -> FOLTerm{
+    g = \x -> usesubterm(x, ttree);
+    switch (tterm) {
+        FOLVar(name): usesubvar(FOLVar(name), ttree);
+        FOLFunc(name, variables): FOLFunc(name, map(variables,g));
+    }
+}
+
+usesubvar(vvar : FOLVar, ttree : Tree<FOLVar,FOLTerm>) -> FOLTerm{
+    lookupTreeDef(ttree, vvar, vvar);
+}
+
+
+//дальнейшие функции используют композицию подстановок
+
+
+tunifer(term1 : FOLTerm, term2 : FOLTerm)-> Maybe<Tree<FOLVar,FOLTerm>> {
+    switch (term1) {
+        FOLVar(name): if
+    }
+}
+
+myfn5(mtree : Maybe<Tree<FOLVar,FOLTerm>>, term : Pair<FOLTerm,FOLTerm>) -> Maybe<Tree<FOLVar,FOLTerm>> {
+    switch (mtree) {
+        None(): None();
+        Some(ttree): switch (tunifer(Pair(usesubterm(term.first, ttree), usesubterm(term.second, ttree)))) {
+            None(): None();
+            Some(tttree) : Some(compsub(ttree, tttree));
+        }
+    }
+}
+
+tsunifer(terms : [Pair<FOLTerm,FOLTerm>]) -> Maybe<Tree<FOLVar,FOLTerm>> -> {
+    foldr(terms, Some(makeTree()), myfn5);
+}
+
+
+//композиция подстановок
+//compsub(tree1 : Tree<FOLVar,FOLTerm>, tree2 : Tree<FOLVar,FOLTerm>) -> Tree<FOLVar,FOLTerm> {
+//    g = \x -> usesubterm(x, tree2);
+//    newtree1 =  mapTree(tree1, g);
+//    newtree =   mergeTree(tree2, newtree1);
+//    f = \k,v -> k == v;
+//    finaltree = filterTree(newtree, f);
+//}
+
 
 main() {
-    test6();
+    test7();
 
 }
+
+
+
 
 test1() -> void {
     mystring = "A_x.E_y.Not_(P(g(x))->Q(y))"; 
