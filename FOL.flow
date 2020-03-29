@@ -434,7 +434,7 @@ findallvars(disj1 : Set<FOLForm>) -> Tree<FOLVar,FOLTerm> {
 }
 
 //новые переменные в клозе
-newclosevars(disj1 : Set<FOLForm>) -> Set<FOLForm> {
+newclausevars(disj1 : Set<FOLForm>) -> Set<FOLForm> {
     newvarss = findallvars(disj1);
     mapSet(disj1,\x->usesubform(x, newvarss));
 }
@@ -453,8 +453,8 @@ bresolve(disj1 : Set<FOLForm>, disj2 : Set<FOLForm>, fform1 : FOLForm, fform2 : 
 
 //правило разрешения по резолюции
 resolve(disj1 : Set<FOLForm>, disj2 : Set<FOLForm>) -> [Set<FOLForm>] {
-    ndisj1 = newclosevars(disj1);
-    ndisj2 = newclosevars(disj2);
+    ndisj1 = newclausevars(disj1);
+    ndisj2 = newclausevars(disj2);
     snfprint(makeSet1(ndisj1));
     snfprint(makeSet1(ndisj2));
     foldSet(ndisj1, [], \a,b->concat(a, foldSet(ndisj2, [], \c,d->concat(c, bresolve(ndisj1, ndisj2, b, d)))));
@@ -511,7 +511,7 @@ test11() -> void {
     out3 = setcnf(out2);
     out4 = snf(out3);
     snfprint(out4);
-    out5 = mapSet(out4,newclosevars);
+    out5 = mapSet(out4,newclausevars);
     snfprint(out5);
 }
 
