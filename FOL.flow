@@ -306,7 +306,7 @@ usesubform(fform : FOLForm, ttree : Tree<FOLVar,FOLTerm>) -> FOLForm{
     g = \x -> usesubterm(x, ttree);
     switch (fform) {
         FOLPred(name, variables): FOLPred(name, map(variables,g));
-        FOLEq(term1, term2): FOLEq(g(term1),g(term1));
+        FOLEq(term1, term2): FOLEq(g(term1),g(term2));
         FOLNeg(form): FOLNeg(usesubform(form, ttree));
         default: fform;
     }
@@ -377,6 +377,40 @@ tsuniferr(terms : [Pair<FOLTerm,FOLTerm>]) -> Maybe<Tree<FOLVar,FOLTerm>> {
     foldr(terms, Some(makeTree()), myfn5);
 }
 
+// унификация литералов без отрицания
+bfsunifer(fform1 : FOLForm, fform2 : FOLForm) -> Maybe<Tree<FOLVar,FOLTerm>> {
+    switch (fform1) {
+        FOLEq(form1,form2) : switch (fform2) {
+            FOLEq(form3,form4) : {
+                    g = tsunifer([form1,form2],[form3,form4]);
+                    switch (g) {
+                        None() : tsunifer([form1,form2],[form4,form3]);
+                        default : g;
+                }
+            }
+            default : None();
+        }
+        FOLPred(name1,vars1): switch (fform2) {
+            FOLPred(name2,vars2): if (name1 == name2) tsunifer(vars1, vars2) else None();
+            default : None();
+        }
+        default : None();
+    }
+}
+
+// унификация литералов c отрицанием
+bfsuniferwn(fform1 : FOLForm, fform2 : FOLForm) -> Maybe<Tree<FOLVar,FOLTerm>> {
+    switch (fform1) {
+    FOLNeg(form) : bfsunifer(form, fform2);
+    default : switch (fform2) {
+            FOLNeg(form) : bfsunifer(fform1, form);
+            default : None();        
+        }
+    }
+}
+
+
+//с равенством возможна проблема, так как унификатор выдает всего одно значение, а возможно два
 //резольвента
 //нахождение всех переменных и задание новых имен
 findallvarsss(tterm : FOLTerm) -> Tree<FOLVar,bool> {
@@ -396,7 +430,7 @@ findallvarss(fform : FOLForm) -> Tree<FOLVar,bool> {
 }
 
 findallvars(disj1 : Set<FOLForm>) -> Tree<FOLVar,FOLTerm> {
-    mapTree(foldSet(disj1 , makeTree(), \x,y -> mergeTree(x, findallvarss(y))), \x->newvar()) ;
+    mapTree(foldSet(disj1, makeTree(), \x,y -> mergeTree(x, findallvarss(y))), \x->newvar()) ;
 }
 
 //новые переменные в клозе
@@ -406,15 +440,66 @@ newclosevars(disj1 : Set<FOLForm>) -> Set<FOLForm> {
 }
 
 
-//правило разрешения
+bresolve(disj1 : Set<FOLForm>, disj2 : Set<FOLForm>, fform1 : FOLForm, fform2 : FOLForm) -> [Set<FOLForm>] {
+    switch(bfsuniferwn(fform1, fform2)) {
+        None(): [];
+        Some(ttree) : 
+            {
+                println(ttree);
+                [mapSet(mergeSets(removeSet(disj1, fform1), removeSet(disj1, fform1)),\x->usesubform(x, ttree))];
+            }
+    }
+}
+
+//правило разрешения по резолюции
 resolve(disj1 : Set<FOLForm>, disj2 : Set<FOLForm>) -> [Set<FOLForm>] {
-    [disj1];
+    ndisj1 = newclosevars(disj1);
+    ndisj2 = newclosevars(disj2);
+    snfprint(makeSet1(ndisj1));
+    snfprint(makeSet1(ndisj2));
+    foldSet(ndisj1, [], \a,b->concat(a, foldSet(ndisj2, [], \c,d->concat(c, bresolve(ndisj1, ndisj2, b, d)))));
 }
 
 
 
 main() {
-    test11();
+    test14();
+}
+
+
+
+test14() -> void {
+    str1 = "g(x)=f(x)";
+    str2 = "Not_b=g(g(a))";
+    str3 = "g(x)=f(x)";
+    str4 = "Not_b=g(g(a))";
+    println(str1 + "," + str2);
+    println(str3 + "," + str4);
+    cl1 = buildSet([s2pf(str1),s2pf(str2)]);
+    cl2 = buildSet([s2pf(str3),s2pf(str4)]);
+    snfprint(buildSet(bresolve(cl1,cl2,s2pf(str2),s2pf(str3))));
+    //res = resolve(cl1,cl2);
+    //iter(res,\x->snfprint(makeSet1(x)));
+}
+
+test13() -> void {
+    fststr = "g(x)=f(x)";
+    sndstr = "Not_b=g(g(a))";
+    println(fststr);
+    println(sndstr);
+    lit1 = s2pf(fststr);
+    lit2 = s2pf(sndstr);
+    println(bfsuniferwn(lit1,lit2));    
+}
+
+test12() -> void {
+    fststr = "P(x,y,z)";
+    sndstr = "P(a,b,c)";
+    println(fststr);
+    println(sndstr);
+    lit1 = s2pf(fststr);
+    lit2 = s2pf(sndstr);
+    println(bfsunifer(lit1,lit2));    
 }
 
 test11() -> void {
