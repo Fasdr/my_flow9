@@ -325,12 +325,9 @@ usesubvar(vvar : FOLVar, ttree : Tree<FOLVar,FOLTerm>) -> FOLTerm{
 }
 
 
-//дальнейшие функции используют композицию подстановок
-
 //композиция подстановок
 compsub(tree1 : Tree<FOLVar,FOLTerm>, tree2 : Tree<FOLVar,FOLTerm>) -> Tree<FOLVar,FOLTerm> {
-    g = \x -> usesubterm(x, tree2);
-    newtree1 = mapTree(tree1, g);
+    newtree1 = mapTree(tree1, \x -> usesubterm(x, tree2));
     newtree = mergeTree(tree2, newtree1);
     filterTree(newtree, \k,v -> k != v);
 }
@@ -370,6 +367,8 @@ myfn5(mtree : Maybe<Tree<FOLVar,FOLTerm>>, term : Pair<FOLTerm,FOLTerm>) -> Mayb
     }
 }
 
+
+//унификация
 tsunifer(terms1 : [FOLTerm], terms2 : [FOLTerm]) -> Maybe<Tree<FOLVar,FOLTerm>> {
     if (length(terms1) == length(terms2)) tsuniferr(zipWith(terms1,terms2,\x,y->Pair(x,y))) else None()
 }
@@ -378,15 +377,78 @@ tsuniferr(terms : [Pair<FOLTerm,FOLTerm>]) -> Maybe<Tree<FOLVar,FOLTerm>> {
     foldr(terms, Some(makeTree()), myfn5);
 }
 
+//резольвента
+//нахождение всех переменных и задание новых имен
+findallvarsss(tterm : FOLTerm) -> Tree<FOLVar,bool> {
+    switch (tterm) {
+        FOLVar(name) : makeTree1(tterm, true);
+        FOLFunc(name,variables): fold(variables, makeTree(), \x,y -> mergeTree(x, findallvarsss(y)));
+    }
+}
+
+findallvarss(fform : FOLForm) -> Tree<FOLVar,bool> {
+    switch (fform) {
+        FOLNeg(form) : findallvarss(form);
+        FOLEq(form1,form2) : mergeTree(findallvarsss(form1),findallvarsss(form2));
+        FOLPred(name, variables) : fold(variables, makeTree(), \x,y -> mergeTree(x, findallvarsss(y)));
+        default: makeTree();
+    }
+}
+
+findallvars(disj1 : Set<FOLForm>) -> Tree<FOLVar,FOLTerm> {
+    mapTree(foldSet(disj1 , makeTree(), \x,y -> mergeTree(x, findallvarss(y))), \x->newvar()) ;
+}
+
+//новые переменные в клозе
+newclosevars(disj1 : Set<FOLForm>) -> Set<FOLForm> {
+    newvarss = findallvars(disj1);
+    mapSet(disj1,\x->usesubform(x, newvarss));
+}
 
 
+//правило разрешения
+resolve(disj1 : Set<FOLForm>, disj2 : Set<FOLForm>) -> [Set<FOLForm>] {
+    [disj1];
+}
 
 
 
 main() {
-    test9();
+    test11();
 }
 
+test11() -> void {
+    mystring = "A_x.E_y.E_z.((Not_P(x,y,c)/\\Q(x,z,c))\\/R(x,y,z,c,b))";
+    println(mystring);
+    in = s2pf(mystring);
+    out1 = pfuvar(in);
+    out2 = pfbpr(out1);
+    out3 = setcnf(out2);
+    out4 = snf(out3);
+    snfprint(out4);
+    out5 = mapSet(out4,newclosevars);
+    snfprint(out5);
+}
+
+test10() -> void {
+    f1 = s2pt("x");
+    f2 = s2pt("f(g(y))");
+    f3 = s2pt("x");
+    f4 = s2pt("f(g(y))");
+    ts1 = [f1,f3];
+    ts2 = [f2,f4];
+    println(map(ts1, \x-> (t2s(x))));
+    println(map(ts2, \x-> (t2s(x))));
+    unif = tsunifer(ts1,ts2);
+    switch (unif){
+        None() : println("can't be unificated!");
+        Some(ttree) : {
+            println(ttree);
+            println(map(ts1, \x-> (t2s(usesubterm(x, ttree)))));
+            println(map(ts2, \x-> (t2s(usesubterm(x, ttree)))));
+        }
+    }
+}
 
 test9() -> void {
     f1 = s2pt("f(x,y,g(z,e))");
@@ -408,8 +470,6 @@ test9() -> void {
             println(map(ts2, \x-> (t2s(usesubterm(x, ttree)))));
         }
     }
-
-
 }
 
 test8() -> void {
