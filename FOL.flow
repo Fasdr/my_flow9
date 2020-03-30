@@ -445,8 +445,7 @@ bresolve(disj1 : Set<FOLForm>, disj2 : Set<FOLForm>, fform1 : FOLForm, fform2 : 
         None(): [];
         Some(ttree) : 
             {
-                println(ttree);
-                [mapSet(mergeSets(removeSet(disj1, fform1), removeSet(disj1, fform1)),\x->usesubform(x, ttree))];
+                [mapSet(mergeSets(removeSet(disj1, fform1), removeSet(disj2, fform2)),\x->usesubform(x, ttree))];
             }
     }
 }
@@ -455,18 +454,23 @@ bresolve(disj1 : Set<FOLForm>, disj2 : Set<FOLForm>, fform1 : FOLForm, fform2 : 
 resolve(disj1 : Set<FOLForm>, disj2 : Set<FOLForm>) -> [Set<FOLForm>] {
     ndisj1 = newclausevars(disj1);
     ndisj2 = newclausevars(disj2);
-    snfprint(makeSet1(ndisj1));
-    snfprint(makeSet1(ndisj2));
     foldSet(ndisj1, [], \a,b->concat(a, foldSet(ndisj2, [], \c,d->concat(c, bresolve(ndisj1, ndisj2, b, d)))));
 }
 
 
 
 main() {
-    test14();
+    test15();
 }
 
-
+test15() -> void {
+    mystr = "((Not_P(x)\\/Q(x))/\\(P(z)\\/Not_Q(z)))";
+    myset = snfonefunc(mystr);
+    myar = set2array(myset);
+    nicesetcnfprint(myset);
+    myres = resolve(myar[0],myar[1]);
+    println(myres);
+}
 
 test14() -> void {
     str1 = "g(x)=f(x)";
@@ -477,9 +481,9 @@ test14() -> void {
     println(str3 + "," + str4);
     cl1 = buildSet([s2pf(str1),s2pf(str2)]);
     cl2 = buildSet([s2pf(str3),s2pf(str4)]);
-    snfprint(buildSet(bresolve(cl1,cl2,s2pf(str2),s2pf(str3))));
-    //res = resolve(cl1,cl2);
-    //iter(res,\x->snfprint(makeSet1(x)));
+    //nicesetcnfprint(buildSet(bresolve(cl1,cl2,s2pf(str1),s2pf(str4))));
+    res = resolve(cl1,cl2);
+    iter(res,\x->nicesetcnfprint(makeSet1(x)));
 }
 
 test13() -> void {
@@ -631,4 +635,9 @@ test7() -> void {
     out3 = setcnf(out2);
     out4 = snf(out3);
     snfprint(out4);
+}
+
+//пирведение к snf в одной функции
+snfonefunc(str : string) -> Set<Set<FOLForm>> {
+    snf(setcnf(pfbpr(pfuvar(s2pf(str)))));
 }
