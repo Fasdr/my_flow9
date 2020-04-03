@@ -535,8 +535,18 @@ incon(form : Set<Set<FOLForm>>) -> bool {
 
 
 main() {
-    test25();
+    test26();
 }
+
+//еще более трудный тест
+test26() -> void {
+    mystr = "(A_x.(E(x)/\\(Not_V(x)->E_y.(S(x,y)/\\C(y))))/\\(E_x.((P(x)/\\E(x))/\\A_y.(S(x,y)->P(y)))/\\(A_x.(P(x)->Not_V(x))/\\Not_E_x.(P(x)/\\C(x)))))";
+    println(mystr);
+    myset = snfonefunc(mystr);
+    nicesetcnfprint(myset);
+    println(incon(myset));
+}
+
 
 //более сложный тест
 test25() -> void {
