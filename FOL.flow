@@ -457,10 +457,36 @@ resolve(disj1 : Set<FOLForm>, disj2 : Set<FOLForm>) -> [Set<FOLForm>] {
     foldSet(ndisj1, [], \a,b->concat(a, foldSet(ndisj2, [], \c,d->concat(c, bresolve(ndisj1, ndisj2, b, d)))));
 }
 
+//пока без факторизации
+mresolve(disj1 : Set<FOLForm>, disj2 : Set<FOLForm>) -> Maybe<[Set<FOLForm>]> {
+    newr = resolve(disj1, disj2);
+    if (contains(newr, makeSet())) {
+        None();
+    }  
+    else {
+        Some(newr);
+    }
+}
+
+
+//один шаг
+
+
 
 
 main() {
-    test15();
+    test16();
+}
+
+test16() -> void {
+    //mystr = "(((Not_P(x)\\/Q(x))\\/G(x))/\\((P(z)\\/Not_Q(z))\\/Not_G(z)))";
+    //mystr = "((P(u)\\/P(f(u)))/\\(Not_P(v)\\/P(f(w))))";
+    mystr = "(P(f(u))/\\Not_P(v))";
+    myset = snfonefunc(mystr);
+    myar = set2array(myset);
+    nicesetcnfprint(myset);
+    myres = resolve(myar[0],myar[1]);
+    nicesetcnfprint(buildSet(myres));
 }
 
 test15() -> void {
