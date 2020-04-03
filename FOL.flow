@@ -535,7 +535,16 @@ incon(form : Set<Set<FOLForm>>) -> bool {
 
 
 main() {
-    test23();
+    test25();
+}
+
+//более сложный тест
+test25() -> void {
+    mystr = "((A_x.(C(x)->(W(x)/\\R(x)))/\\E_x.(C(x)/\\O(x)))/\\Not_E_x.(O(x)/\\R(x)))";
+    println(mystr);
+    myset = snfonefunc(mystr);
+    nicesetcnfprint(myset);
+    println(incon(myset));
 }
 
 //что-то без факторизации
