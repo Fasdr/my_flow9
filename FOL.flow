@@ -469,11 +469,12 @@ mresolve(disj1 : Set<FOLForm>, disj2 : Set<FOLForm>) -> Maybe<[Set<FOLForm>]> {
 }
 
 rrfnn(h : Maybe<[Set<FOLForm>]>, disj1 : Set<FOLForm>, disj2 : Set<FOLForm> ) -> Maybe<[Set<FOLForm>]> {
+
     switch (h) {
         None() : h;
         Some(odis) : {
             switch (mresolve(disj1,disj2)) {
-                None() : h;
+                None() : None();
                 Some(ndis) : Some(concat(odis, ndis));
             }
         }
@@ -481,11 +482,12 @@ rrfnn(h : Maybe<[Set<FOLForm>]>, disj1 : Set<FOLForm>, disj2 : Set<FOLForm> ) ->
 }
 
 rrffnn(h : Maybe<[Set<FOLForm>]>, disj : Set<FOLForm>, disjs : [Set<FOLForm>] ) -> Maybe<[Set<FOLForm>]> {
+    
     switch (h) {
         None() : h;
         Some(odis) : {
             switch (fold(disjs, Some([]), (\a,b -> rrfnn(a, b, disj )))) {
-                None() : h;
+                None() : None();
                 Some(ndis) : Some(concat(odis, ndis));
             }
         }
@@ -499,7 +501,7 @@ resstepon(old : [Set<FOLForm>], new : [Set<FOLForm>]) -> Maybe<[Set<FOLForm>]> {
 }
 
 resstepnn(new : [Set<FOLForm>]) -> Maybe<[Set<FOLForm>]> {
-    foldi(new, Some([]), (\i,x,y -> rrffnn(x, y, tailFrom(new, i+1))));
+    foldi(new, Some([]), (\i,x,y -> rrffnn(x, y, tailFrom(new, i + 1))));
 }
 
 bincon(old : [Set<FOLForm>], new : [Set<FOLForm>]) -> bool {
@@ -507,10 +509,12 @@ bincon(old : [Set<FOLForm>], new : [Set<FOLForm>]) -> bool {
         None() : true;
         Some(n1) : switch (resstepon(old,new)) {
             None() : true;
-            Some(n2) : bincon(concat(old,new),concat(n1,n2));
+            Some(n2) : {
+                n = concat(n1,n2);
+                if (length(n) == 0) false else bincon(concat(old,new), n);
+            }
         }
     }
-
 }
 
 incon(form : Set<Set<FOLForm>>) -> bool {
@@ -521,7 +525,9 @@ incon(form : Set<Set<FOLForm>>) -> bool {
     else {
         switch (resstepnn(ar)) {
             None() : true;
-            Some(n) : bincon(ar,n);
+            Some(n) : {
+                bincon(ar, n);
+            }
         }
     }
 }
@@ -529,7 +535,43 @@ incon(form : Set<Set<FOLForm>>) -> bool {
 
 
 main() {
-    test20();
+    test23();
+}
+
+//что-то без факторизации
+test24() -> void {
+    mystr = "((((P()\\/Q())/\\(Not_P()\\/Q()))/\\(P()\\/Not_Q()))/\\(Not_P()\\/Not_Q()))";
+    println(mystr);
+    myset = snfonefunc(mystr);
+    nicesetcnfprint(myset);
+    println(incon(myset));
+}
+
+//не работает
+test23() -> void {
+    mystr = "((P(u)\\/P(f(u)))/\\((Not_P(v)\\/P(f(w)))/\\(Not_P(x)\\/Not_P(f(x)))))";
+    println(mystr);
+    myset = snfonefunc(mystr);
+    nicesetcnfprint(myset);
+    println(incon(myset));
+}
+
+test22() -> void {
+    mystr = "(A_x.(P(x)->Q(x))/\\(A_x.(Q(x)->R(x))/\\Not_A_x.(P(x)->R(x))))";
+    println(mystr);
+    myset = snfonefunc(mystr);
+    nicesetcnfprint(myset);
+    println(incon(myset));
+}
+
+test21() -> void {
+    //mystr = "(P(x)/\\(Q(z)\\/Not_P(x)))";
+    //mystr = "(P(x)/\\(Q(z)/\\Not_P(x)))";
+    //mystr = "(P(x)/\\(Q(z)/\\Not_G(x)))";
+    mystr = "(P(f(a,a,a,a,a))/\\(Q(z)/\\Not_P(f(g(a),f(b),c,d,e))))";
+    myset = snfonefunc(mystr);
+    nicesetcnfprint(myset);
+    println(incon(myset));
 }
 
 test20() -> void {
@@ -540,7 +582,7 @@ test20() -> void {
 }
 
 test19() -> void {
-    mystr = "((P(u)\\/P(f(u)))/\\(Not_P(v)\\/P(f(w))))";
+    mystr = "(P(x)/\\Not_P(x))";
     myset = snfonefunc(mystr);
     myar = set2array(myset);
     nicesetcnfprint(myset);
@@ -556,7 +598,7 @@ test18() -> void {
 }
 
 test17() -> void {
-    mystr = "(P(f(u))/\\Not_P(v))";
+    mystr = "(P(x)/\\Not_P(x))";
     myset = snfonefunc(mystr);
     myar = set2array(myset);
     nicesetcnfprint(myset);
