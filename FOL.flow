@@ -409,6 +409,19 @@ bfsuniferwn(fform1 : FOLForm, fform2 : FOLForm) -> Maybe<Tree<FOLVar,FOLTerm>> {
     }
 }
 
+// унификация литералов c отрицанием для факторинга
+fbfsuniferwn(fform1 : FOLForm, fform2 : FOLForm) -> Maybe<Tree<FOLVar,FOLTerm>> {
+    switch (fform1) {
+        FOLNeg(form1) : switch (fform2) {
+            FOLNeg(form2) : bfsunifer(form1, form2);
+            default : None();  
+        }
+    default : switch (fform2) {
+            FOLNeg(form) : None();
+            default : bfsunifer(fform1, fform2);       
+        }
+    }
+}
 
 //с равенством возможна проблема, так как унификатор выдает всего одно значение, а возможно два
 //резольвента
@@ -532,10 +545,52 @@ incon(form : Set<Set<FOLForm>>) -> bool {
     }
 }
 
+//факторинг
+fnfnfn(a1 : FOLForm, a2 : FOLForm, disj : Set<FOLForm>) -> [Set<FOLForm>]{
+    switch(fbfsuniferwn(a1,a2)) {
+        None() : [];
+        Some(ttree) : [mapSet(removeSet(disj,a1),\x->usesubform(x, ttree))];
+    }
+}
 
+ofactor(disj : Set<FOLForm>) -> [Set<FOLForm>]{
+    ar = set2array(disj);
+    foldi(ar, [], \i,a,b->concat(a,fold(tailFrom(ar, i+1), [], \x,y->concat(x,fnfnfn(b,y,disj)))));
+}
+
+newfactor(old : [Set<FOLForm>]) -> [Set<FOLForm>] {
+    fold(old, [], \x,y -> concat(x,ofactor(y)));
+}
+
+bfullfactor(old : [Set<FOLForm>], new : [Set<FOLForm>]) -> [Set<FOLForm>] {
+    nnew = newfactor(new);
+    oold = concat(old,new);
+    if (length(oold)==0) {
+        oold;
+    }
+    else {
+        bfullfactor(oold,nnew);
+    }
+}
+
+fullfactor(forms : [Set<FOLForm>]) -> [Set<FOLForm>] {
+    bfullfactor([],forms);
+}
 
 main() {
-    test26();
+    test27();
+}
+
+//тестируем факторинг
+test27() -> void {
+    mystr = "((P(f(u))\\/P(v))\\/P(g(w)))";
+    println(mystr);
+    myset = snfonefunc(mystr);
+    nicesetcnfprint(myset);
+    ar = set2array(myset);
+    println(ar[0]);
+    of = ofactor(ar[0]);
+    println(of);
 }
 
 //еще более трудный тест
@@ -546,7 +601,6 @@ test26() -> void {
     nicesetcnfprint(myset);
     println(incon(myset));
 }
-
 
 //более сложный тест
 test25() -> void {
