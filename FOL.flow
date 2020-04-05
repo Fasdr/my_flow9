@@ -578,7 +578,7 @@ fullfactor(forms : [Set<FOLForm>]) -> [Set<FOLForm>] {
 }
 
 main() {
-    test27() ;
+    test27();
 }
 
 //тестируем факторинг
