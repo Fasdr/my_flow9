@@ -565,7 +565,7 @@ newfactor(old : [Set<FOLForm>]) -> [Set<FOLForm>] {
 bfullfactor(old : [Set<FOLForm>], new : [Set<FOLForm>]) -> [Set<FOLForm>] {
     nnew = newfactor(new);
     oold = concat(old,new);
-    if (length(oold)==0) {
+    if (length(nnew)==0) {
         oold;
     }
     else {
@@ -578,7 +578,17 @@ fullfactor(forms : [Set<FOLForm>]) -> [Set<FOLForm>] {
 }
 
 main() {
-    test27();
+    test28();
+}
+
+//тестируем факторинг
+test28() -> void {
+    mystr = "((P(f(u))\\/P(v))\\/P(f(g(w))))";
+    myset = snfonefunc(mystr);
+    nicesetcnfprint(myset);
+    ar = set2array(myset);
+    fu = fullfactor(ar);
+    nicesetcnfprint(buildSet(fu));
 }
 
 //тестируем факторинг
