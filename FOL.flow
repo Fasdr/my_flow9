@@ -520,11 +520,11 @@ resstepnn(new : [Set<FOLForm>]) -> Maybe<[Set<FOLForm>]> {
 bincon(old : [Set<FOLForm>], new : [Set<FOLForm>]) -> bool {
     switch (resstepon(old,new)) {
         None() : true;
-        Some(n1) : switch (resstepon(old,new)) {
+        Some(n1) : switch (resstepnn(new)) {
             None() : true;
             Some(n2) : {
                 n = concat(n1,n2);
-                if (length(n) == 0) false else bincon(concat(old,new), n);
+                if (length(n) == 0) false else bincon(concat(old,new), fullfactor(n));
             }
         }
     }
@@ -536,10 +536,11 @@ incon(form : Set<Set<FOLForm>>) -> bool {
         false;
     }
     else {
-        switch (resstepnn(ar)) {
+        newar = fullfactor(ar);
+        switch (resstepnn(newar)) {
             None() : true;
             Some(n) : {
-                bincon(ar, n);
+                bincon(newar, fullfactor(n));
             }
         }
     }
@@ -578,7 +579,7 @@ fullfactor(forms : [Set<FOLForm>]) -> [Set<FOLForm>] {
 }
 
 main() {
-    test28();
+    test23();
 }
 
 //тестируем факторинг
